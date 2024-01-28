@@ -4,10 +4,10 @@ repos:
     hooks:
       -   id: check-yaml
       -   id: detect-private-key
-  - repo: https://github.com/ashwin153/pre-commit-vagrant
-    rev: v1.1.0
-    hooks:
-      - id: vagrant-validate
+  #- repo: https://github.com/ashwin153/pre-commit-vagrant
+  #  rev: v1.1.0
+  #  hooks:
+  #    - id: vagrant-validate
   - repo: https://github.com/iamthefij/docker-pre-commit
     rev: v3.0.1
     hooks:

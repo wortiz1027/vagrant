@@ -1,0 +1,55 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+UBUNTU_BOX = "bento/ubuntu-22.04"
+IP_BASE = "192.168.56."
+
+MASTERS = [
+  {:hostname => 'k8s-master-', :box => UBUNTU_BOX, :memory => 2048, :cpus => 2}
+]
+
+WORKERS = [
+  {:hostname => 'k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3},
+  {:hostname => 'k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3}
+]
+
+Vagrant.configure("2") do |config|
+  config.ssh.insert_key = false
+
+  MASTERS.to_enum.with_index(1).each do |machine, i|
+    config.vm.define "#{machine[:hostname]}#{i}" do |master|
+      master.vm.box = machine[:box]
+      master.vm.network "private_network", ip: "#{IP_BASE}#{i + 10}"
+      master.vm.hostname = "#{machine[:hostname]}#{i}"
+      
+      master.vm.provider "virtualbox" do |vbx|
+        vbx.name   = "#{machine[:hostname]}#{i}"
+        vbx.memory = machine[:memory]
+        vbx.cpus   = machine[:cpus]
+      end
+
+      master.vm.provision "ansible" do |ansible|
+        ansible.playbook = "ansible/playbooks/master.yaml"
+      end
+    end
+  end
+
+  WORKERS.to_enum.with_index(1).each do |node, j|
+    config.vm.define "#{node[:hostname]}#{j}" do |worker|
+      worker.vm.box = node[:box]
+      worker.vm.network "private_network", ip: "#{IP_BASE}#{j + 10 + MASTERS.length()}"
+      worker.vm.hostname = "#{node[:hostname]}#{j}"
+
+      worker.vm.provider "virtualbox" do |vbx|
+        vbx.name   = "#{node[:hostname]}#{j}"
+        vbx.memory = node[:memory]
+        vbx.cpus   = node[:cpus]
+      end
+      
+      worker.vm.provision "ansible" do |ansible|
+        ansible.playbook = "ansible/playbooks/worker.yaml"
+      end
+    end  
+  end
+  
+end
