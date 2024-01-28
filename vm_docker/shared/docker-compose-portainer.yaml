@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    networks:
+      - default
+    command: --admin-password "$$2y$$05$$nzBD8N0UnpSdAAbngQ4oAed3movf3R4wDO947B68IhHPtZ71YDkQ6" -H unix:///var/run/docker.sock
+    ports:
+      - 9443:9443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
+      - portainer-data:/data 
+    environment:
+      - TZ=$TZ
+volumes:
+  portainer-data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: $PORTAINER_DATA
