@@ -1,0 +1,5 @@
+*.swp
+*.retry
+**/.vagrant
+**/shared/data/*
+!**/shared/data/.gitkeep
