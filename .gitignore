@@ -3,3 +3,5 @@
 **/.vagrant
 **/shared/data/*
 !**/shared/data/.gitkeep
+
+**/ansible/playbooks/k8s/join-*
