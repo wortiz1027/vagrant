@@ -14,7 +14,7 @@
 
 El objetivo de este repositorio es poder crear maquinas virtuales y aprovisionarlas con herramientas como docker, CRI-O y K8S para facilitar la creaci'on de un ambiente de desarrollo con las heramientas necesarias!
 
-## 🚀 Instalacion
+## Instalacion
 
 ```bash
 sudo pacman -S vagrant \
@@ -28,7 +28,7 @@ sudo pacman -S vagrant \
 git clone https://github.com/wortiz1027/vagrant.git && cd vagrant
 ```
 
-## Creacion y Aprobisionamiento
+## Creacion y Aprovisionamiento
 
 vagran es la raiz del proyecto y dentro existen 2 directorios para crear y aprovisionar maquinas para docker y k8s, debes escoger que clase de maquina quieres crear/aprovisionar y ejecutar el siguiente comando:
 
