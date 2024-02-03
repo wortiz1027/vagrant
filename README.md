@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://kubernetes.io/es/">
-    <img src="https://github.com/kubernetes/kubernetes/blob/master/logo/logo.svg" />
+    <img src="https://github.com/kubernetes/kubernetes/blob/master/logo/logo.svg" width="480" height="380"/>
   </a>
 </div>
 <div align="center">
