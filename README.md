@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://kubernetes.io/es/">
-    <img src="../vagrant/docs/images/container.png" width="200" height="180"/>
+    <img src="docs/images/container.png" width="200" height="180"/>
   </a>
 </div>
 <div align="center">
