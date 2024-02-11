@@ -18,6 +18,10 @@ El objetivo de este repositorio es poder crear maquinas virtuales y aprovisionar
 
 ## Instalacion
 
+El siguiente comando es valido para ArchLinux y derivadas:
+
+> valida la forma de instalarlo en tu distribucion de preferencia
+
 ```bash
 sudo pacman -S vagrant \
                ansible  \
@@ -63,6 +67,37 @@ pero si no quieres tener que tipear la variable **DOCKER_HOST** cada que ejecuta
 ```bash
 export DOCKER_HOST=tcp://<yout-vm-ip-address>:<vm-docker-port>
 ```
+1.1 Development Environment
+
+La idea de aprovisionar una maquina con docker es poder tener un ambiente listo para desarrollar. En el archivo docker-compose.yaml agrego un listado de servicios/aplicaciones implesindibles, entre las que destaco:
+
+- traefik
+- whoami
+- portainer
+...
+
+en el archivo boostrap.sh se crean un conjunto de certificados para aprovechar las capacidades de traefik y que nuestro ambiente esté bajo un entorno seguro, para esto se hacer uso de [mkcert](https://github.com/FiloSottile/mkcert) para simular una CA Authority y al momento de navegar desde el navegador por las aplicaciones no tener la alerta de sitio no seguro, para ello una vez creada y aprovisionada la maquina ejecutamos los siguientes pasos desde la maquina host:
+
+```bash
+scp -r vagrant@192.168.56.10:/home/vagrant/.local/share/mkcert ~/.local/share/
+```
+
+> **password**: vagrant
+
+esto con el objetivo de copiar los certificados del **CAROOT** de la vm en nuestra maquina host, las imagenes a continuacion describen el proceso:
+
+![image info](./docs/images/config0.png)
+![image info](./docs/images/config1.png)
+![image info](./docs/images/config2.png)
+![image info](./docs/images/config3.png)
+![image info](./docs/images/config4.png)
+![image info](./docs/images/config5.png)
+![image info](./docs/images/config6.png)
+![image info](./docs/images/config7.png)
+![image info](./docs/images/config8.png)
+![image info](./docs/images/config10.png)
+![image info](./docs/images/config11.png)
+![image info](./docs/images/config12.png)
 
 2. Ambiente K8S
 
