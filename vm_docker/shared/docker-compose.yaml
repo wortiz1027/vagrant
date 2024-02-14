@@ -19,10 +19,85 @@ volumes:
       o: bind
       type: none
       device: $PORTAINER_DATA
+  keycloak-data:
+  pgdata-kc:
+    external: true
 
 services:
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: services_socket_proxy
+    restart: always
+    security_opt:
+      - no-new-privileges
+    ports:
+      - 2375:2375
+    networks:
+      - ntw_development
+    environment:
+      - LOG_LEVEL=info
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      - AUTH=0
+      - SECRETS=0
+      - POST=1
+      - BUILD=0
+      - COMMIT=0
+      - CONFIGS=0
+      - CONTAINERS=1
+      - DISTRIBUTION=0
+      - EXEC=0
+      - IMAGES=1
+      - INFO=1
+      - NETWORKS=1
+      - NODES=0
+      - PLUGINS=0
+      - SERVICES=1
+      - SESSION=0
+      - SWARM=0
+      - SYSTEM=0
+      - TASKS=1
+      - VOLUMES=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: services_watchtower
+    restart: always
+    depends_on:
+      - socket-proxy
+    command:
+      - '--host=tcp://socket-proxy:2375'
+      - '--schedule=0 30 4 * * *'
+      - '--debug'
+      - '--stop-timeout=5m'
+      - '--cleanup'
+    security_opt:
+      - no-new-privileges
+    networks:
+      - ntw_development
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: services_dozzle
+    restart: always
+    depends_on:
+      - socket-proxy
+    networks:
+      - ntw_development
+    environment:
+      DOZZLE_LEVEL: info
+      DOZZLE_TAILSIZE: 500
+      DOZZLE_FILTER: "status=running"
+      DOCKER_HOST: tcp://socket-proxy:2375
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.http.routers.dozzle.rule=Host(`logs.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
   traefik:
-    image: traefik:latest
+    image: traefik:v3.0.0-beta5
     container_name: server_traefik
     restart: always
     security_opt:
@@ -30,7 +105,9 @@ services:
     ports:
       - 80:80
       - 443:443
-      - 8080:8080 
+      - 8080:8080
+      - 3306:3306
+      - 5432:5432
     networks:
       - ntw_development
     environment:
@@ -39,7 +116,8 @@ services:
       - /vagrant/shared/config/traefik/tls.yaml:/etc/traefik/dynamic.yaml:ro
       - /vagrant/shared/config/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
       - /vagrant/shared/certs:/etc/certs:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro    
+    depends_on:
+      - socket-proxy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.server_traefik=true"
@@ -57,7 +135,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.developer.local`)"
+      - "traefik.http.routers.whoami.rule=Host(`whoami$.{DOMAIN_DEVELOPMENT}`)"
       - "traefik.http.routers.whoami.tls=true"
   portainer:    
     image: portainer/portainer-ce:latest
@@ -70,65 +148,113 @@ services:
     environment:
       - TZ=$TZ
     volumes:
+      - portainer-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
-      - portainer-data:/data 
     command: --admin-password "$$2y$$05$$nzBD8N0UnpSdAAbngQ4oAed3movf3R4wDO947B68IhHPtZ71YDkQ6" -H unix:///var/run/docker.sock # Portainer2024..
+    depends_on:
+      - socket-proxy
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.developer.local`)"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN_DEVELOPMENT}`)"
       - "traefik.http.routers.portainer.tls=true"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
-#   mysql-kc:
-#     image: mysql:8.0.27
-#     ports:
-#       - 3366:3306
-#     restart: unless-stopped
-#     environment:
-#       # The user, password and database that Keycloak
-#       # is going to create and use
-#       MYSQL_USER: keycloak_user
-#       MYSQL_PASSWORD: keycloak_password
-#       MYSQL_DATABASE: keycloak_db
-#       # Self-Explanatory
-#       MYSQL_ROOT_PASSWORD: root_password
-#     healthcheck:
-#       test:
-#         - CMD
-#         - mysql
-#         - -e
-#         - select 1
-#       interval: 10s
-#       start_period: 20s
-#       timeout: 5s
-#     volumes:
-#       - keycloak-and-mysql-volume:/var/lib/mysql
-#     networks:
-#       - keycloak-and-mysql-network
+  postgres-kc:
+    image: postgres:latest
+    container_name: server_postgres_kc
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ
+      - POSTGRES_DB=$KEYCLOAK_DATABASE_NAME
+      - POSTGRES_USER=$KEYCLOAK_DATABASE_USERNAME
+      - POSTGRES_PASSWORD=$KEYCLOAK_DATABASE_PASSWORD
+      - PGDATA=/var/lib/postgresql/data
+    volumes:
+      - pgdata-kc:/var/lib/postgresql/data
+    healthcheck:
+      test: "exit 0"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.tcp.routers.postgres-kc.entrypoints=postgres"
+      - "traefik.tcp.routers.postgres-kc.rule=HostSNI(`keycloak.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
+      - "traefik.tcp.routers.postgres-kc.tls=true"
+      - "traefik.tcp.routers.postgres-kc.tls.passthrough=false"
+      - "traefik.tcp.services.postgres-kc.loadbalancer.server.port=5432"
+  postgres-lr:
+    image: postgres:latest
+    container_name: server_postgres_learning
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ
+      - POSTGRES_DB=$LEARNING_DATABASE_NAME
+      - POSTGRES_USER=$LEARNING_DATABASE_USERNAME
+      - POSTGRES_PASSWORD=$LEARNING_DATABASE_PASSWORD
+      - PGDATA=/var/lib/postgresql/data
+    volumes:
+      - pgdata-kc:/var/lib/postgresql/data
+    healthcheck:
+      test: "exit 0"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.tcp.routers.postgres-lr.entrypoints=postgres"
+      - "traefik.tcp.routers.postgres-lr.rule=HostSNI(`learning.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
+      - "traefik.tcp.routers.postgres-lr.tls=true"
+      - "traefik.tcp.routers.postgres-lr.tls.passthrough=false"
+      - "traefik.tcp.services.postgres-lr.loadbalancer.server.port=5432"
+  mysql-lr:
+    image: mysql:8.0.27
+    container_name: server_mysql_learning
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      MYSQL_USER: $LEARNING_DATABASE_USERNAME
+      MYSQL_PASSWORD: $LEARNING_DATABASE_PASSWORD
+      MYSQL_DATABASE: $LEARNING_DATABASE_NAME
+      MYSQL_ROOT_PASSWORD: $LEARNING_DATABASE_ROOT_PASSWORD
+    volumes:
+      - keycloak-data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - mysql
+        - -e
+        - select 1
+      interval: 10s
+      start_period: 20s
+      timeout: 5s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.tcp.routers.mysql-lr.entrypoints=mysql"
+      - "traefik.tcp.routers.mysql-lr.rule=HostSNI(`learning.${DOMAIN_DEVELOPMENT_MYSQL}`)"
+      - "traefik.tcp.routers.mysql-lr.tls=true"
+      - "traefik.tcp.routers.mysql-lr.tls.passthrough=false"
+      - "traefik.tcp.services.mysql-lr.loadbalancer.server.port=3306"
 
-#   keycloak-w:
-#     image: quay.io/keycloak/keycloak:latest
-#     command: start-dev
-#     ports:
-#       - 8080:8080
-#       - 8443:8443
-#     restart: unless-stopped
-#     environment:
-#       # User and password for the Administration Console
-#       KC_HTTP_RELATIVE_PATH: /keycloak
-#       KEYCLOAK_USER: admin_user
-#       KEYCLOAK_PASSWORD: admin_password
-#       DB_VENDOR: mysql
-#       DB_ADDR: mysql-kc
-#       DB_PORT: 3306
-#       # Same values as the mysql-kc service
-#       DB_USER: keycloak_user
-#       DB_PASSWORD: keycloak_password
-#       DB_DATABASE: keycloak_db
-#     depends_on:
-#       - mysql-kc
-#     networks:
-#       - keycloak-and-mysql-network
+#  keycloak:
+#    image: quay.io/keycloak/keycloak:latest
+#    command: start
+#    restart: unless-stopped
+#    environment:
+#
+#    depends_on:
+#      - postgres-kc
+#    networks:
+#      - keycloak-and-mysql-network
+
 #   grafana:
 #     image: grafana/grafana:latest
 #     container_name: grafana
