@@ -16,6 +16,29 @@ http:
             sans:
               - "*.developer.local"
 
+#tcp:
+#  routers:
+#    postgres:
+#      entryPoints:
+#      - postgres
+#      service: postgres
+#      rule: HostSNI(`*`)
+#    mysql-router:
+#      entryPoints:
+#      - mysql-ep
+#      service: mysql-srv
+#      rule: HostSNI(`*`)
+#  services:
+#    postgres:
+#      loadBalancer:
+#        servers:
+#          - address: postgres1:5432
+#          - address: postgres2:5432
+#    mysql-srv:
+#      loadBalancer:
+#        servers:
+#          - address: mysql:3306
+
 tls:
   certificates:
     - certFile: "/etc/certs/traefik.crt"
