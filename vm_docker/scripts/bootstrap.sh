@@ -79,6 +79,7 @@ sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey /vagra
 #
 #######################################################################
 
+sudo docker volume create pgdata-kc
 sudo docker network create --driver bridge ntw_development
 
 sudo docker compose -f $APP_SHARED/docker-compose.yaml up -d
@@ -100,7 +101,10 @@ sudo ufw allow 443
 # sudo openssl pkcs12 -info -in /vagrant/shared/certs/traefik.p12 -nodes
 # scp -r vagrant@192.168.56.10:/home/vagrant/.local/share/mkcert ~/.local/share/
 # sudo usermod -aG docker $USER
+# docker volume create pgdata
 # sudo systemctl stop docker
 # sudo systemctl stop docker.socket
 # enable remote docker daemon execution => sudo dockerd -H unix:///var/run/docker.sock -H tcp://<remote-ip-address>
 # https://docker-docs.uclv.cu/engine/install/binaries/
+# docker stop $(docker ps -a -q)
+# docker rm $(docker ps -a -q)
