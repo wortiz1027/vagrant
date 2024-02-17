@@ -18,7 +18,7 @@ volumes:
     driver_opts:
       o: bind
       type: none
-      device: $PORTAINER_DATA
+      device: ${PORTAINER_DATA}
   keycloak-data:
   pgdata-kc:
     external: true
@@ -35,6 +35,7 @@ services:
     networks:
       - ntw_development
     environment:
+      - TZ=$TZ
       - LOG_LEVEL=info
       - EVENTS=1
       - PING=1
@@ -65,31 +66,36 @@ services:
     image: containrrr/watchtower:latest
     container_name: services_watchtower
     restart: always
-    depends_on:
-      - socket-proxy
+    security_opt:
+      - no-new-privileges
     command:
       - '--host=tcp://socket-proxy:2375'
       - '--schedule=0 30 4 * * *'
       - '--debug'
       - '--stop-timeout=5m'
       - '--cleanup'
-    security_opt:
-      - no-new-privileges
     networks:
       - ntw_development
+    environment:
+      - TZ=$TZ
+    depends_on:
+      - socket-proxy
   dozzle:
     image: amir20/dozzle:latest
     container_name: services_dozzle
     restart: always
-    depends_on:
-      - socket-proxy
+    security_opt:
+      - no-new-privileges:true
     networks:
       - ntw_development
     environment:
-      DOZZLE_LEVEL: info
-      DOZZLE_TAILSIZE: 500
-      DOZZLE_FILTER: "status=running"
-      DOCKER_HOST: tcp://socket-proxy:2375
+      - TZ=$TZ
+      - DOZZLE_LEVEL=info
+      - DOZZLE_TAILSIZE=500
+      - DOZZLE_FILTER="status=running"
+      - DOCKER_HOST=tcp://socket-proxy:2375
+    depends_on:
+      - socket-proxy
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=ntw_development"
@@ -111,7 +117,7 @@ services:
     networks:
       - ntw_development
     environment:
-      - TZ=$TZ      
+      - TZ=$TZ
     volumes:
       - /vagrant/shared/config/traefik/tls.yaml:/etc/traefik/dynamic.yaml:ro
       - /vagrant/shared/config/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
@@ -169,9 +175,9 @@ services:
       - ntw_development
     environment:
       - TZ=$TZ
-      - POSTGRES_DB=$KEYCLOAK_DATABASE_NAME
-      - POSTGRES_USER=$KEYCLOAK_DATABASE_USERNAME
-      - POSTGRES_PASSWORD=$KEYCLOAK_DATABASE_PASSWORD
+      - POSTGRES_DB=${KEYCLOAK_DATABASE_NAME}
+      - POSTGRES_USER=${KEYCLOAK_DATABASE_USERNAME}
+      - POSTGRES_PASSWORD={$KEYCLOAK_DATABASE_PASSWORD}
       - PGDATA=/var/lib/postgresql/data
     volumes:
       - pgdata-kc:/var/lib/postgresql/data
@@ -195,9 +201,9 @@ services:
       - ntw_development
     environment:
       - TZ=$TZ
-      - POSTGRES_DB=$LEARNING_DATABASE_NAME
-      - POSTGRES_USER=$LEARNING_DATABASE_USERNAME
-      - POSTGRES_PASSWORD=$LEARNING_DATABASE_PASSWORD
+      - POSTGRES_DB=${LEARNING_DATABASE_NAME}
+      - POSTGRES_USER=${LEARNING_DATABASE_USERNAME}
+      - POSTGRES_PASSWORD=${LEARNING_DATABASE_PASSWORD}
       - PGDATA=/var/lib/postgresql/data
     volumes:
       - pgdata-kc:/var/lib/postgresql/data
@@ -220,21 +226,18 @@ services:
     networks:
       - ntw_development
     environment:
-      MYSQL_USER: $LEARNING_DATABASE_USERNAME
-      MYSQL_PASSWORD: $LEARNING_DATABASE_PASSWORD
-      MYSQL_DATABASE: $LEARNING_DATABASE_NAME
-      MYSQL_ROOT_PASSWORD: $LEARNING_DATABASE_ROOT_PASSWORD
+      - MYSQL_USER=${LEARNING_DATABASE_USERNAME}
+      - MYSQL_PASSWORD=${LEARNING_DATABASE_PASSWORD}
+      - MYSQL_DATABASE=${LEARNING_DATABASE_NAME}
+      - MYSQL_ROOT_PASSWORD=${LEARNING_DATABASE_ROOT_PASSWORD}
     volumes:
       - keycloak-data:/var/lib/mysql
     healthcheck:
-      test:
-        - CMD
-        - mysql
-        - -e
-        - select 1
-      interval: 10s
-      start_period: 20s
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
+      start_period: 5s
+      interval: 5s
       timeout: 5s
+      retries: 55
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=ntw_development"
