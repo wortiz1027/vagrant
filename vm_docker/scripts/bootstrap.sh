@@ -69,7 +69,7 @@ mkdir -p $APP_SHARED/certs
 
 sudo -H -u vagrant mkcert -cert-file $APP_SHARED/certs/traefik.crt \
 	-key-file $APP_SHARED/certs/traefik.key \
-	"developer.local" "*.developer.local"
+	"developer.dck" "*.developer.dck"
 
 sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey /vagrant/shared/certs/traefik.key -in /vagrant/shared/certs/traefik.crt -passin pass:changeit -passout pass:changeit
 
