@@ -22,6 +22,16 @@ volumes:
   keycloak-data:
   pgdata-kc:
     external: true
+  pgdata-lr:
+    external: true
+  mysqldata-st:
+    external: true
+  mongo-st:
+    external: true
+  pgadmin:
+    external: true   
+  redis_data:
+    external: true
 
 services:
   socket-proxy:
@@ -112,8 +122,15 @@ services:
       - 80:80
       - 443:443
       - 8080:8080
-      - 3306:3306
+      #- 3306:3306
       - 5432:5432
+      #- 27017:27017
+      - 7000:700
+      #- 8181:8181
+      #- 4848:4848
+      #- 9009:9009
+      - 15672:15672
+      - 5672:5672
     networks:
       - ntw_development
     environment:
@@ -129,20 +146,6 @@ services:
       - "traefik.http.routers.server_traefik=true"
       - "traefik.http.routers.server_traefik.tls=true"
       - "traefik.http.services.server_traefik.loadbalancer.server.port=8080"
-  whoami:
-    image: containous/whoami
-    container_name: server_whoami
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.whoami.rule=Host(`whoami$.{DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.whoami.tls=true"
   portainer:    
     image: portainer/portainer-ce:latest
     container_name: server_portainer
@@ -165,6 +168,20 @@ services:
       - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN_DEVELOPMENT}`)"
       - "traefik.http.routers.portainer.tls=true"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+  whoami:
+    image: containous/whoami
+    container_name: server_whoami
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.whoami.tls=true"  
   postgres-kc:
     image: postgres:latest
     container_name: server_postgres_kc
@@ -177,7 +194,7 @@ services:
       - TZ=$TZ
       - POSTGRES_DB=${KEYCLOAK_DATABASE_NAME}
       - POSTGRES_USER=${KEYCLOAK_DATABASE_USERNAME}
-      - POSTGRES_PASSWORD={$KEYCLOAK_DATABASE_PASSWORD}
+      - POSTGRES_PASSWORD=${KEYCLOAK_DATABASE_PASSWORD}
       - PGDATA=/var/lib/postgresql/data
     volumes:
       - pgdata-kc:/var/lib/postgresql/data
@@ -193,7 +210,7 @@ services:
       - "traefik.tcp.services.postgres-kc.loadbalancer.server.port=5432"
   postgres-lr:
     image: postgres:latest
-    container_name: server_postgres_learning
+    container_name: server_postgres_lr
     restart: always
     security_opt:
       - no-new-privileges:true
@@ -206,7 +223,7 @@ services:
       - POSTGRES_PASSWORD=${LEARNING_DATABASE_PASSWORD}
       - PGDATA=/var/lib/postgresql/data
     volumes:
-      - pgdata-kc:/var/lib/postgresql/data
+      - pgdata-lr:/var/lib/postgresql/data
     healthcheck:
       test: "exit 0"
     labels:
@@ -217,60 +234,189 @@ services:
       - "traefik.tcp.routers.postgres-lr.tls=true"
       - "traefik.tcp.routers.postgres-lr.tls.passthrough=false"
       - "traefik.tcp.services.postgres-lr.loadbalancer.server.port=5432"
-  mysql-lr:
-    image: mysql:8.0.27
-    container_name: server_mysql_learning
+  mysql-st:
+    image: mysql:latest
+    container_name: server_mysql_st
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - 3306:3306
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ    
+      - MYSQL_DATABASE=${STUDY_DATABASE_NAME}    
+      - MYSQL_USER=${STUDY_DATABASE_USERNAME}
+      - MYSQL_PASSWORD=${STUDY_DATABASE_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${STUDY_DATABASE_ROOT_PASSWORD}
+      - MYSQL_ROOT_HOST='%'
+    volumes:
+      - mysqldata-st:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 3
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.docker.network=ntw_development"
+#      - "traefik.tcp.routers.mysql-st.entrypoints=mysql"
+#      - "traefik.tcp.routers.mysql-st.service=mysql"
+#      - "traefik.tcp.routers.mysql-st.rule=HostSNI(`study.${DOMAIN_DEVELOPMENT_MYSQL}`)"
+#      - "traefik.tcp.routers.mysql-st.tls=true"
+#      - "traefik.tcp.routers.mysql-st.tls.passthrough=false"
+#      - "traefik.tcp.services.mysql.loadbalancer.server.port=3306"
+
+  mongo:
+    image: mongo:latest
+    container_name: server_mongo_st
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    ports:
+      - 27017:27017      
+    environment:
+      - TZ=$TZ    
+      - MONGO_INITDB_DATABASE=${MONGO_DATABASE_NAME}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_DATABASE_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_DATABASE_PASSWORD}
+    volumes:
+      - mongo-st:/data/db
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.docker.network=ntw_development"
+#      - "traefik.tcp.routers.mongo.entrypoints=mongo"
+#      - "traefik.tcp.routers.mongo.service=mongo"
+#      - "traefik.tcp.routers.mongo.rule=HostSNI(`*`)"
+#      #- "traefik.tcp.routers.mongo.tls=true"
+#      #- "traefik.tcp.routers.mongo.tls.passthrough=false"
+#      #- "traefik.tcp.routers.mongo.tls.domains[0].main=${DOMAIN_DEVELOPMENT_MONGO}"
+#      - "traefik.tcp.services.mongo.loadbalancer.server.port=27017"     
+
+  redis:
+    image: redis:latest
+    container_name: server_redis
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    entrypoint: [ "redis-server", "/etc/redis/redis.conf" ]
+    command: ["--cluster-enabled", "yes", "--cluster-config-file", "/data/nodes.conf", "--appendonly", "yes", "--requirepass", "$${REDIS_HOST_PASSWORD}"]
+    environment:
+      - TZ=$TZ    
+      - DOCKER_CONTENT_TRUST=0
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/etc/redis/redis.conf
+      - ./redis-7000.conf:/etc/redis/redis-7000.conf
+      - ./redis-7001.conf:/etc/redis/redis-7001.conf
+      - ./redis-7002.conf:/etc/redis/redis-7002.conf
+      - ./redis-7003.conf:/etc/redis/redis-7003.conf
+      - ./redis-7004.conf:/etc/redis/redis-7004.conf
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.tcp.routers.redis.entrypoints=redis"
+      - "traefik.tcp.routers.redis.service=redis"
+      - "traefik.tcp.routers.redis.rule=HostSNI(`redis.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.tcp.routers.redis.tls=true"
+      - "traefik.tcp.routers.redis.tls.passthrough=false"
+      - "traefik.tcp.services.redis.loadbalancer.server.port=7000"         
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: server_pgadmin
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development      
+    environment:
+      - TZ=$TZ
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      - PGADMIN_CONFIG_SERVER_MODE=${PGADMIN_CONFIG_SERVER_MODE}
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.pgadmin.tls=true"
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: server_mongo_express
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development 
+    environment:
+      - TZ=$TZ
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD}
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGOEXPRESS_LOGIN}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGOEXPRESS_PASSWORD}
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_DATABASE_USERNAME}:${MONGO_DATABASE_PASSWORD}@mongo:27017/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.http.routers.mongo-express.rule=Host(`me.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.mongo-express.tls=true"
+      - "traefik.http.services.mongo-express.loadbalancer.server.port=8081"
+    depends_on:
+      - mongo
+
+  payara:
+    image: payara/server-full
+    container_name: server_payara
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    ports:
+      - "8082:8080"
+      - "8181:8181"
+      - "4848:4848"
+      - "9009:9009"
+#    environment:
+#    JVM_ARGS: ""
+#     - "AS_ADMIN_MASTERPASSWORD=admin" #default password is `changeit`
+    volumes:
+      - ./deployments:/opt/payara/deployments
+    environment:
+      - TZ=$TZ    
+      - ADMIN_USER=${PAYARA_ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${PAYARA_ADMIN_PASSWORD}    
+
+  rabbit:
+    image: rabbitmq:3-management
+    container_name: server_rabbit
     restart: always
     security_opt:
       - no-new-privileges:true
     networks:
       - ntw_development
     environment:
-      - MYSQL_USER=${LEARNING_DATABASE_USERNAME}
-      - MYSQL_PASSWORD=${LEARNING_DATABASE_PASSWORD}
-      - MYSQL_DATABASE=${LEARNING_DATABASE_NAME}
-      - MYSQL_ROOT_PASSWORD=${LEARNING_DATABASE_ROOT_PASSWORD}
+      - TZ=$TZ 
+      - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
     volumes:
-      - keycloak-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "--silent"]
-      start_period: 5s
-      interval: 5s
-      timeout: 5s
-      retries: 55
+      - "./enabled_plugins:/etc/rabbitmq/enabled_plugins"
     labels:
+      - "NAME=rabbitmq"
       - "traefik.enable=true"
       - "traefik.docker.network=ntw_development"
-      - "traefik.tcp.routers.mysql-lr.entrypoints=mysql"
-      - "traefik.tcp.routers.mysql-lr.rule=HostSNI(`learning.${DOMAIN_DEVELOPMENT_MYSQL}`)"
-      - "traefik.tcp.routers.mysql-lr.tls=true"
-      - "traefik.tcp.routers.mysql-lr.tls.passthrough=false"
-      - "traefik.tcp.services.mysql-lr.loadbalancer.server.port=3306"
-
-#  keycloak:
-#    image: quay.io/keycloak/keycloak:latest
-#    command: start
-#    restart: unless-stopped
-#    environment:
-#
-#    depends_on:
-#      - postgres-kc
-#    networks:
-#      - keycloak-and-mysql-network
-
-#   grafana:
-#     image: grafana/grafana:latest
-#     container_name: grafana
-#     security_opt:
-#       - no-new-privileges:true
-#     restart: unless-stopped
-#     networks:
-#       - default
-#     ports:
-#       - "3000:3000"
-#     user: $PUID
-#     volumes:
-#       - $DOCKERDIR/appdata/grafana:/var/lib/grafana
-#     environment:
-#       GF_INSTALL_PLUGINS: "grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel,grafana-piechart-panel"
-
+      - "traefik.http.routers.rabbit.rule=Host(`rabbit.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.rabbit.tls=true"
+      - "traefik.http.services.rabbit.loadbalancer.server.port=15672"

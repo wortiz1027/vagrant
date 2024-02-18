@@ -80,6 +80,12 @@ sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey /vagra
 #######################################################################
 
 sudo docker volume create pgdata-kc
+sudo docker volume create pgdata-lr
+sudo docker volume create mysqldata-st
+sudo docker volume create mongo-st
+sudo docker volume create pgadmin
+sudo docker volume create redis_data
+
 sudo docker network create --driver bridge ntw_development
 
 sudo docker compose -f $APP_SHARED/docker-compose.yaml up -d

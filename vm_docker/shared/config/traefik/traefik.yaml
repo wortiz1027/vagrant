@@ -23,7 +23,7 @@ providers:
     watch: true
 
 log:
-  level: INFO
+  level: DEBUG
   format: common
 
 entryPoints:
@@ -36,7 +36,15 @@ entryPoints:
           scheme: https
   https:
     address: ":443"
-  mysql:
-    address: ":3306"
+  #mysql:
+  #  address: ":3306"
   postgres:
     address: ":5432"
+  #mongo:
+  #  address: ":27017"
+  redis:
+    address: ":7000"
+  #payara:
+  #  address: ":4848"
+  rabbit:
+    address: ":15672"
