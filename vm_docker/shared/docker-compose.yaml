@@ -72,6 +72,7 @@ services:
       - VOLUMES=1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+  
   watchtower:
     image: containrrr/watchtower:latest
     container_name: services_watchtower
@@ -90,6 +91,7 @@ services:
       - TZ=$TZ
     depends_on:
       - socket-proxy
+  
   dozzle:
     image: amir20/dozzle:latest
     container_name: services_dozzle
@@ -112,6 +114,7 @@ services:
       - "traefik.http.routers.dozzle.rule=Host(`logs.${DOMAIN_DEVELOPMENT}`)"
       - "traefik.http.routers.dozzle.tls=true"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+  
   traefik:
     image: traefik:v3.0.0-beta5
     container_name: server_traefik
@@ -122,7 +125,7 @@ services:
       - 80:80
       - 443:443
       - 8080:8080
-      #- 3306:3306
+      - 8443:8443
       - 5432:5432
       #- 27017:27017
       - 7000:700
@@ -131,6 +134,8 @@ services:
       #- 9009:9009
       - 15672:15672
       - 5672:5672
+      - 16686:16686
+      - 9090:9090
     networks:
       - ntw_development
     environment:
@@ -146,6 +151,7 @@ services:
       - "traefik.http.routers.server_traefik=true"
       - "traefik.http.routers.server_traefik.tls=true"
       - "traefik.http.services.server_traefik.loadbalancer.server.port=8080"
+  
   portainer:    
     image: portainer/portainer-ce:latest
     container_name: server_portainer
@@ -168,6 +174,7 @@ services:
       - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN_DEVELOPMENT}`)"
       - "traefik.http.routers.portainer.tls=true"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+ 
   whoami:
     image: containous/whoami
     container_name: server_whoami
@@ -182,6 +189,7 @@ services:
       - "traefik.docker.network=ntw_development"
       - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN_DEVELOPMENT}`)"
       - "traefik.http.routers.whoami.tls=true"  
+  
   postgres-kc:
     image: postgres:latest
     container_name: server_postgres_kc
@@ -192,9 +200,9 @@ services:
       - ntw_development
     environment:
       - TZ=$TZ
-      - POSTGRES_DB=${KEYCLOAK_DATABASE_NAME}
-      - POSTGRES_USER=${KEYCLOAK_DATABASE_USERNAME}
-      - POSTGRES_PASSWORD=${KEYCLOAK_DATABASE_PASSWORD}
+      - POSTGRES_DB=${KC_DB_NAME}
+      - POSTGRES_USER=${KC_DB_USERNAME}
+      - POSTGRES_PASSWORD=${KC_DB_PASSWORD}
       - PGDATA=/var/lib/postgresql/data
     volumes:
       - pgdata-kc:/var/lib/postgresql/data
@@ -208,6 +216,7 @@ services:
       - "traefik.tcp.routers.postgres-kc.tls=true"
       - "traefik.tcp.routers.postgres-kc.tls.passthrough=false"
       - "traefik.tcp.services.postgres-kc.loadbalancer.server.port=5432"
+  
   postgres-lr:
     image: postgres:latest
     container_name: server_postgres_lr
@@ -234,6 +243,7 @@ services:
       - "traefik.tcp.routers.postgres-lr.tls=true"
       - "traefik.tcp.routers.postgres-lr.tls.passthrough=false"
       - "traefik.tcp.services.postgres-lr.loadbalancer.server.port=5432"
+  
   mysql-st:
     image: mysql:latest
     container_name: server_mysql_st
@@ -313,12 +323,12 @@ services:
       - DOCKER_CONTENT_TRUST=0
     volumes:
       - redis_data:/data
-      - ./redis.conf:/etc/redis/redis.conf
-      - ./redis-7000.conf:/etc/redis/redis-7000.conf
-      - ./redis-7001.conf:/etc/redis/redis-7001.conf
-      - ./redis-7002.conf:/etc/redis/redis-7002.conf
-      - ./redis-7003.conf:/etc/redis/redis-7003.conf
-      - ./redis-7004.conf:/etc/redis/redis-7004.conf
+      - ./redis/redis.conf:/etc/redis/redis.conf
+      - ./redis/redis-7000.conf:/etc/redis/redis-7000.conf
+      - ./redis/redis-7001.conf:/etc/redis/redis-7001.conf
+      - ./redis/redis-7002.conf:/etc/redis/redis-7002.conf
+      - ./redis/redis-7003.conf:/etc/redis/redis-7003.conf
+      - ./redis/redis-7004.conf:/etc/redis/redis-7004.conf
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=ntw_development"
@@ -396,7 +406,7 @@ services:
       - TZ=$TZ    
       - ADMIN_USER=${PAYARA_ADMIN_USERNAME}
       - ADMIN_PASSWORD=${PAYARA_ADMIN_PASSWORD}    
-
+  
   rabbit:
     image: rabbitmq:3-management
     container_name: server_rabbit
@@ -412,7 +422,7 @@ services:
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
       - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
     volumes:
-      - "./enabled_plugins:/etc/rabbitmq/enabled_plugins"
+      - ./rabbit/enabled_plugins:/etc/rabbitmq/enabled_plugins
     labels:
       - "NAME=rabbitmq"
       - "traefik.enable=true"
@@ -420,3 +430,107 @@ services:
       - "traefik.http.routers.rabbit.rule=Host(`rabbit.${DOMAIN_DEVELOPMENT}`)"
       - "traefik.http.routers.rabbit.tls=true"
       - "traefik.http.services.rabbit.loadbalancer.server.port=15672"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: server_keycloak
+    entrypoint: /opt/keycloak/bin/kc.sh start
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ
+      - KC_HOSTNAME=keycloak.${DOMAIN_DEVELOPMENT}
+      - KC_PROXY_ADDRESS_FORWARDING=true
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HTTP_ENABLED=true
+      - KC_DB=${KC_DB}
+      - KC_DB_URL=jdbc:postgresql://server_postgres_kc:${KC_DB_PORT}/${KC_DB_NAME}
+      - KC_DB_USERNAME=${KC_DB_USERNAME}
+      - KC_DB_PASSWORD=${KC_DB_PASSWORD}
+      - KC_PROXY=${KC_PROXY}
+      - KEYCLOAK_LOGLEVEL=DEBUG
+      - ROOT_LOGLEVEL=DEBUG
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.http.routers.keycloak.entrypoints=https"
+      - "traefik.http.routers.keycloak.rule=Host(`keycloak.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.keycloak.tls=true"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"  
+#    depends_on:
+#      postgres-kc:
+#        condition: service_healthy
+
+  jaeger:
+    image: jaegertracing/all-in-one:${JAEGER_IMAGE_TAG:-latest}
+    container_name: server_jaeger
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development    
+    environment:
+      - TZ=$TZ 
+      - METRICS_STORAGE_TYPE=prometheus
+      - PROMETHEUS_SERVER_URL=http://prometheus:9090
+      - PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR=${PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR:-true}
+      - PROMETHEUS_QUERY_NAMESPACE=${PROMETHEUS_QUERY_NAMESPACE:-}
+      - PROMETHEUS_QUERY_DURATION_UNIT=${PROMETHEUS_QUERY_DURATION_UNIT:-}
+      - PROMETHEUS_QUERY_NORMALIZE_CALLS=true
+      - PROMETHEUS_QUERY_NORMALIZE_DURATION=true
+    volumes:
+      - ./tracing/jaeger-ui.json:/etc/jaeger/jaeger-ui.json
+    command: --query.ui-config /etc/jaeger/jaeger-ui.json
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.http.routers.jaeger.rule=Host(`jaeger.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.jaeger.tls=true"
+      - "traefik.http.services.jaeger.loadbalancer.server.port=16686"    
+  
+  otel:
+    image: otel/opentelemetry-collector-contrib:${OTEL_IMAGE_TAG:-latest}
+    container_name: server_otel
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ 
+    volumes:
+      - ${OTEL_CONFIG_SRC:-./otel/otel-collector-config-connector.yml}:/etc/otelcol/otel-collector-config.yml
+    command: --config /etc/otelcol/otel-collector-config.yml
+    depends_on:
+      - jaeger
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: server_prometheus
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090" 
