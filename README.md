@@ -70,10 +70,25 @@ export DOCKER_HOST=tcp://<yout-vm-ip-address>:<vm-docker-port>
 1.1 Development Environment
 
 La idea de aprovisionar una maquina con docker es poder tener un ambiente listo para desarrollar. En el archivo docker-compose.yaml agrego un listado de servicios/aplicaciones implesindibles, entre las que destaco:
-
-- traefik
-- whoami
-- portainer
+| Component   |      Image      |  Version |
+|----------|:-------------:|------:|
+| docker-socket-proxy | tecnativa/docker-socket-proxy | latest |
+| watchtower | containrrr/watchtower | latest |
+| dozzle | amir20/dozzle | latest |
+| traefik | traefik | v3.0.0-beta5 |
+| portainer | portainer/portainer-ce | latest |
+| whoami | containous/whoami | latest |
+| postgres | postgres | latest |
+| mysql | mysq | latest |
+| mongo | mong | latest |
+| redis | redis | latest |
+| pgadmin | dpage/pgadmin4 | latest |
+| mongo-express |  mongo-express | latest |
+| payara | payara/server-full | latest |
+| keycloak | quay.io/keycloak/keycloak | latest |
+| jaeger | jaegertracing/all-in-one | latest |
+| otel | otel/opentelemetry-collector-contrib | latest |
+| prometheus | prom/prometheus | latest |
 ...
 
 en el archivo boostrap.sh se crean un conjunto de certificados para aprovechar las capacidades de traefik y que nuestro ambiente esté bajo un entorno seguro, para esto se hacer uso de [mkcert](https://github.com/FiloSottile/mkcert) para simular una CA Authority y al momento de navegar desde el navegador por las aplicaciones no tener la alerta de sitio no seguro, para ello una vez creada y aprovisionada la maquina ejecutamos los siguientes pasos desde la maquina host:
