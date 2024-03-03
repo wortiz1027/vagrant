@@ -534,3 +534,29 @@ services:
       - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN_DEVELOPMENT}`)"
       - "traefik.http.routers.prometheus.tls=true"
       - "traefik.http.services.prometheus.loadbalancer.server.port=9090" 
+
+  openldap:
+    image: osixia/openldap:latest
+    container_name: server_keycloak
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ
+      - DISABLE_CHOWN="true"
+      - LDAP_LOG_LEVEL="256"
+      - LDAP_DOMAIN="example.org"
+      - LDAP_ADMIN_PASSWORD="admin123"
+      - LDAP_READONLY_USER="false"
+      - LDAP_TLS="false"
+      - LDAP_RFC2307BIS_SCHEMA="false"
+      - LDAP_SEED_INTERNAL_LDIF_PATH=/resources/
+    command:
+      - --loglevel
+      - info
+    ports:
+      - "8389:389"
+    volumes:
+      - ./ldap/embedded-ldap.ldif:/resources/embedded-ldap.ldif
