@@ -75,6 +75,15 @@ sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey /vagra
 
 #######################################################################
 #
+#	Downloading PostgreSQL Database Example
+#
+#######################################################################
+mkdir $HOME/postgres-examples
+wget -o $HOME/postgres-examples/dvdrental.zip https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip
+wget -o $HOME/postgres-examples/demo-big-en.zip https://edu.postgrespro.com/demo-big-en.zip 
+
+#######################################################################
+#
 #	Init Development Environment
 #
 #######################################################################
@@ -114,3 +123,4 @@ sudo ufw allow 443
 # https://docker-docs.uclv.cu/engine/install/binaries/
 # docker stop $(docker ps -a -q)
 # docker rm $(docker ps -a -q)
+# docker volume rm $(docker volume ls -q)
