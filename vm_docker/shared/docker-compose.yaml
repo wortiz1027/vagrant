@@ -32,6 +32,10 @@ volumes:
     external: true   
   redis_data:
     external: true
+  influxdb-storage:
+    external: true
+  grafana-storage:
+    external: true
 
 services:
   socket-proxy:
@@ -127,15 +131,12 @@ services:
       - 8080:8080
       - 8443:8443
       - 5432:5432
-      #- 27017:27017
       - 7000:700
-      #- 8181:8181
-      #- 4848:4848
-      #- 9009:9009
       - 15672:15672
       - 5672:5672
       - 16686:16686
       - 9090:9090
+      - 3000:3000
     networks:
       - ntw_development
     environment:
@@ -473,6 +474,32 @@ services:
 #      postgres-kc:
 #        condition: service_healthy
 
+  openldap:
+    image: osixia/openldap:latest
+    container_name: server_ldap
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ
+      - DISABLE_CHOWN="true"
+      - LDAP_LOG_LEVEL="256"
+      - LDAP_DOMAIN="example.org"
+      - LDAP_ADMIN_PASSWORD="admin123"
+      - LDAP_READONLY_USER="false"
+      - LDAP_TLS="false"
+      - LDAP_RFC2307BIS_SCHEMA="false"
+      - LDAP_SEED_INTERNAL_LDIF_PATH=/resources/
+    command:
+      - --loglevel
+      - info
+    ports:
+      - "8389:389"
+    volumes:
+      - ./ldap/embedded-ldap.ldif:/resources/embedded-ldap.ldif
+
   jaeger:
     image: jaegertracing/all-in-one:${JAEGER_IMAGE_TAG:-latest}
     container_name: server_jaeger
@@ -535,28 +562,50 @@ services:
       - "traefik.http.routers.prometheus.tls=true"
       - "traefik.http.services.prometheus.loadbalancer.server.port=9090" 
 
-  openldap:
-    image: osixia/openldap:latest
-    container_name: server_keycloak
+  influxdb:
+    image: influxdb:latest
+    container_name: server_influxdb
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    ports:
+      - '8086:8086'
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    environment:
+      - TZ=$TZ
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: server_grafana
     restart: always
     security_opt:
       - no-new-privileges:true
     networks:
       - ntw_development
     environment:
-      - TZ=$TZ
-      - DISABLE_CHOWN="true"
-      - LDAP_LOG_LEVEL="256"
-      - LDAP_DOMAIN="example.org"
-      - LDAP_ADMIN_PASSWORD="admin123"
-      - LDAP_READONLY_USER="false"
-      - LDAP_TLS="false"
-      - LDAP_RFC2307BIS_SCHEMA="false"
-      - LDAP_SEED_INTERNAL_LDIF_PATH=/resources/
-    command:
-      - --loglevel
-      - info
-    ports:
-      - "8389:389"
+      - TZ=$TZ    
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
     volumes:
-      - ./ldap/embedded-ldap.ldif:/resources/embedded-ldap.ldif
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/:/etc/grafana/provisioning/
+    depends_on:
+      - influxdb
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"

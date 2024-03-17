@@ -94,6 +94,8 @@ sudo docker volume create mysqldata-st
 sudo docker volume create mongo-st
 sudo docker volume create pgadmin
 sudo docker volume create redis_data
+sudo docker volume create influxdb-storage
+sudo docker volume create grafana-storage
 
 sudo docker network create --driver bridge ntw_development
 
