@@ -126,3 +126,7 @@ sudo ufw allow 443
 # docker stop $(docker ps -a -q)
 # docker rm $(docker ps -a -q)
 # docker volume rm $(docker volume ls -q)
+
+# https://ldap.developer.dck/
+# login DN: cn=admin,dc=developer,dc=dck
+# password: Ldap2024..
