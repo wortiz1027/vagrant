@@ -4,18 +4,18 @@
   become: yes
 
   tasks:
-    - name: Perform a dist-upgrade.
+    - name: Perform a dist-upgrade
       ansible.builtin.apt:
         upgrade: dist
         update_cache: yes
 
-    - name: Check if a reboot is required.
+    - name: Check if a reboot is required
       ansible.builtin.stat:
         path: /var/run/reboot-required
         get_checksum: no
       register: reboot_required_file
 
-    - name: Reboot the server (if required).
+    - name: Reboot the server (if required)
       ansible.builtin.reboot:
       when: reboot_required_file.stat.exists == true
 
@@ -96,16 +96,16 @@
       command: swapoff -a
       when: ansible_swaptotal_mb > 0
 
-    - name: Add an apt signing key for Kubernetes
-      apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        state: present
+    - name: Get Kubernetes package key
+      shell: curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ k8s_key_version }}/deb/Release.key | gpg --dearmor -o /usr/share/keyrings/kubernetes-apt-keyring.gpg
+      args:
+        creates: "/usr/share/keyrings/kubernetes-apt-keyring.gpg"
 
-    - name: Adding apt repository for Kubernetes
+    - name: Install Kubernetes repository
       apt_repository:
-        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
-        state: present
-        filename: kubernetes.list
+        filename: kubernetes
+        repo: "deb [signed-by=/usr/share/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ k8s_key_version }}/deb/ /"
+
     - name: Install Kubernetes binaries
       apt: 
         name: "{{ packages }}"
@@ -113,9 +113,9 @@
         update_cache: yes
       vars:
         packages:
-          - kubelet={{ k8s_version }}-00
-          - kubeadm={{ k8s_version }}-00
-          - kubectl={{ k8s_version }}-00
+          - kubelet={{ k8s_tools_version }}
+          - kubeadm={{ k8s_tools_version }}
+          - kubectl={{ k8s_tools_version }}
 
     - name: Configure crio
       blockinfile:
@@ -146,10 +146,33 @@
       shell: ifconfig eth1 | grep 'inet' | cut -d{{':'}} -f2 | awk '{ print $2 }'
       register: output
 
-    - name: Configure kubelet
-      lineinfile:
-        path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-        line: Environment="KUBELET_EXTRA_ARGS=--node-ip={{ k8s_master_node_ip }}"
+    - name: create an empty file for Kubeadm configuring
+      copy:
+        content: ""
+        dest: /etc/kubernetes/kubeadm-config.yaml
+        force: no
+
+    - name: configuring the container runtime including its cgroup driver
+      blockinfile:
+        path: /etc/kubernetes/kubeadm-config.yaml
+        block: |
+             kind: ClusterConfiguration
+             apiVersion: kubeadm.k8s.io/v1beta3
+             networking:
+               podSubnet: "192.168.0.0/16"
+             ---
+             kind: KubeletConfiguration
+             apiVersion: kubelet.config.k8s.io/v1beta1
+             runtimeRequestTimeout: "15m"
+             cgroupDriver: "systemd"
+             systemReserved:
+               cpu: 100m
+               memory: 350M
+             kubeReserved:
+               cpu: 100m
+               memory: 50M
+             enforceNodeAllocatable:
+             - pods
 
     - name: Initialize the Kubernetes cluster using kubeadm
       command: kubeadm init --apiserver-advertise-address="{{ k8s_master_apiserver_advertise_address }}" --apiserver-cert-extra-sans="{{ k8s_master_apiserver_cert_extra_sans }}" --pod-network-cidr={{ k8s_master_pod_network_cird }}
@@ -170,8 +193,7 @@
 
     - name: Download calico.conf
       get_url:
-        url: https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
-        #url: https://docs.projectcalico.org/manifests/calico.yaml
+        url: https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml
         dest: /home/vagrant/calico.yaml
 
     - name: Add pod config to calico.yaml

@@ -1,19 +1,22 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-UBUNTU_BOX   = "bento/ubuntu-22.04"
-IP_BASE      = "192.168.56."
-K8S_NAME     = "dev-k8s"
-K8S_VERSION  = "1.28.2"
-OS_VERSION   = "xUbuntu_22.04"
-CRIO_VERSION = "1.27"
+UBUNTU_BOX        = "bento/ubuntu-22.04"
+IP_BASE           = "192.168.56."
+K8S_NAME          = "dev-k8s"
+K8S_KEY_VERSION   = "1.29"
+K8S_TOOLS_VERSION = "1.29.*"
+OS_VERSION        = "xUbuntu_22.04"
+CRIO_VERSION      = "1.27"
+CALICO_VERSION    = "3.27.2"
 ANSIBLE_BASE_PATH = "ansible/playbooks/k8s"
 
 MASTERS = [
-  {:hostname => 'k8s-master-', :box => UBUNTU_BOX, :memory => 2048, :cpus => 2}
+  {:hostname => 'k8s-master-', :box => UBUNTU_BOX, :memory => 3048, :cpus => 2}
 ]
 
 WORKERS = [
+  {:hostname => 'k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3},
   {:hostname => 'k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3},
   {:hostname => 'k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3}
 ]
@@ -37,7 +40,7 @@ Vagrant.configure("2") do |config|
         ansible.playbook = "#{ANSIBLE_BASE_PATH}/master.yaml"
         ansible.extra_vars = {
                     k8s_cluster_name: K8S_NAME,
-                    k8s_version: K8S_VERSION,
+                    k8s_key_version: K8S_KEY_VERSION,
                     k8s_master_admin_user: "vagrant",
                     k8s_master_admin_group: "vagrant",
                     k8s_master_node_name: "#{machine[:hostname]}#{i}",
@@ -45,8 +48,10 @@ Vagrant.configure("2") do |config|
                     k8s_master_apiserver_cert_extra_sans: "#{IP_BASE}#{i + 10}",                    
                     k8s_master_node_ip: "#{IP_BASE}#{i + 10}",
                     k8s_master_pod_network_cird: "192.168.0.0/16",
+                    k8s_tools_version: K8S_TOOLS_VERSION,
                     os_version: OS_VERSION,
-                    crio_version: CRIO_VERSION
+                    crio_version: CRIO_VERSION,
+                    calico_version: CALICO_VERSION
                 }
       end
     end
@@ -68,11 +73,12 @@ Vagrant.configure("2") do |config|
         ansible.playbook = "#{ANSIBLE_BASE_PATH}/worker.yaml"
         ansible.extra_vars = {
                     k8s_cluster_name: K8S_NAME,
-                    k8s_version: K8S_VERSION,
+                    k8s_key_version: K8S_KEY_VERSION,
                     k8s_node_admin_user:  "vagrant",
                     k8s_node_admin_group: "vagrant",
                     k8s_node_name: "#{node[:hostname]}#{j}",
                     k8s_node_ip: "#{IP_BASE}#{j + 10 + MASTERS.length()}",
+                    k8s_tools_version: K8S_TOOLS_VERSION,
                     os_version: OS_VERSION,
                     crio_version: CRIO_VERSION
                 }

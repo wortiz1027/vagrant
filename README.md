@@ -136,7 +136,7 @@ cd $HOME
 y ejecutar el siguiente comando:
 
 ```bash
-scp -r vagrant@<k8s-master-node-ip-address>:/home/vagrant/.kube .
+scp -r vagrant@<k8s-master-node-ip-address>:/home/vagrant/.kube ~
 ```
 
 los datos de autenticacion son:
