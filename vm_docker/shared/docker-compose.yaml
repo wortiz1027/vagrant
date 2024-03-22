@@ -137,6 +137,7 @@ services:
       - 16686:16686
       - 9090:9090
       - 3000:3000
+      - 50000:50000
     networks:
       - ntw_development
     environment:
@@ -607,7 +608,7 @@ services:
     networks:
       - ntw_development
     environment:
-      - TZ=$TZ    
+      - TZ=$TZ
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
@@ -624,3 +625,45 @@ services:
       - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN_DEVELOPMENT}`)"
       - "traefik.http.routers.grafana.tls=true"
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  localstack:
+    image: localstack/localstack
+    container_name: "${LOCALSTACK_DOCKER_NAME:-server_localstack}"
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    ports:
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
+    environment:
+      - TZ=$TZ
+      - DEBUG=${DEBUG:-0}
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+    depends_on:
+      - socket-proxy
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: server_jenkins
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ntw_development
+    environment:
+      - TZ=$TZ
+    privileged: true
+    user: root
+    volumes:
+      - ~/jenkins_home:/var/jenkins_home
+    depends_on:
+      - socket-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ntw_development"
+      - "traefik.http.routers.jenkins.rule=Host(`jenkins.${DOMAIN_DEVELOPMENT}`)"
+      - "traefik.http.routers.jenkins.tls=true"
+      - "traefik.http.services.jenkins.loadbalancer.server.port=8080"

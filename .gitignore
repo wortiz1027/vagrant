@@ -2,6 +2,7 @@
 *.retry
 **/.vagrant
 **/shared/data/*
+**/shared/volume/*
 !**/shared/data/.gitkeep
 !**/shared/certs/.gitkeep
 
