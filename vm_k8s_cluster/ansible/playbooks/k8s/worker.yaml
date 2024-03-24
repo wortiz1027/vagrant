@@ -34,6 +34,7 @@
         - software-properties-common 
         - gnupg2
         - net-tools
+        - nfs-common        
 
     - name: Add cri-o apt key
       apt_key: 
@@ -149,3 +150,14 @@
 
     - name: Join the node to cluster
       command: sh /tmp/join-command.sh
+    
+    - name: Create a mountable directory if it does not exist
+      file:
+        path: /mnt/nfs/k8s_client
+        state: directory
+        owner: vagrant
+        group: vagrant
+        mode: '0775'
+
+    - name: Mount volumn
+      shell: sudo mount 192.168.56.9:/mnt/nfs/share_k8s_data	/mnt/nfs/k8s_client

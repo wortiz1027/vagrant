@@ -38,6 +38,7 @@ volumes:
     external: true
 
 services:
+
   socket-proxy:
     image: tecnativa/docker-socket-proxy:latest
     container_name: server_socket_proxy

@@ -1,0 +1,89 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Perform a dist-upgrade
+      ansible.builtin.apt:
+        upgrade: dist
+        update_cache: yes
+
+    - name: Check if a reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+        get_checksum: no
+      register: reboot_required_file
+
+    - name: Reboot the server (if required)
+      ansible.builtin.reboot:
+      when: reboot_required_file.stat.exists == true
+
+    - name: Remove dependencies that are no longer required.
+      ansible.builtin.apt:
+        autoremove: yes
+
+    - name: Install necessary packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common 
+        - gnupg2
+        - net-tools
+        - nfs-kernel-server
+
+    - name: Create a mountable directories for docker containers if it does not exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: vagrant
+        group: vagrant
+        mode: '0775'
+      loop:
+        - /mnt/nfs/share_dck_data/portainer-vlm
+        - /mnt/nfs/share_dck_data/keycloak-vlm
+        - /mnt/nfs/share_dck_data/pgdata-kc-vlm
+        - /mnt/nfs/share_dck_data/pgdata-lr-vlm
+        - /mnt/nfs/share_dck_data/mysqldata-st-vlm
+        - /mnt/nfs/share_dck_data/mongo-st-vlm
+        - /mnt/nfs/share_dck_data/pgadmin-vlm
+        - /mnt/nfs/share_dck_data/redis-vlm
+        - /mnt/nfs/share_dck_data/payara-vlm
+        - /mnt/nfs/share_dck_data/influxdb-vlm
+        - /mnt/nfs/share_dck_data/grafana-vlm
+        - /mnt/nfs/share_dck_data/localstack-vlm
+        - /mnt/nfs/share_dck_data/jenkins-vlm
+
+    - name: Create a mountable directory for k8s labs if it does not exist
+      file:
+        path: /mnt/nfs/share_k8s_data
+        state: directory
+        owner: vagrant
+        group: vagrant
+        mode: '0775'
+
+    - name: Config NFS grants
+      blockinfile:
+        path: "/etc/exports"
+        block: |
+          /mnt/nfs/share_dck_data/portainer-vlm    *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/keycloak-vlm     *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/pgdata-kc-vlm    *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/pgdata-lr-vlm    *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/mysqldata-st-vlm *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/mongo-st-vlm     *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/pgadmin-vlm      *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/redis-vlm        *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/payara-vlm       *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/influxdb-vlm     *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/grafana-vlm      *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/localstack-vlm   *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_dck_data/jenkins-vlm      *(rw,sync,no_root_squash,subtree_check)
+          /mnt/nfs/share_k8s_data                  *(rw,sync,no_root_squash,subtree_check)
+          
+    - name: NFS apply change configrue
+      shell: systemctl reload nfs-kernel-server;exportfs -a

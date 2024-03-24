@@ -14,11 +14,17 @@ sudo apt upgrade -y
 
 #######################################################################
 #
-#	Install and Start/Enable Docker
+#	Install Docker and NFS Server
 #
 #######################################################################
 
 sudo apt install docker.io -y
+
+#######################################################################
+#
+#	Start/Enable Docker
+#
+#######################################################################
 
 sudo systemctl start docker
 sudo systemctl enable docker
@@ -27,7 +33,7 @@ sudo usermod -aG docker "$USER"
 
 #######################################################################
 #
-#	Add Docker's official GPG key And Add the repository to Apt sources
+#	Install Docker Compose
 #
 #######################################################################
 
@@ -37,13 +43,24 @@ sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyring
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 
 echo \
-	"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" |
-	sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 sudo apt-get update
 
 sudo apt-get install docker-compose-plugin
+
+#######################################################################
+#
+#	Config NFS Client
+#
+#######################################################################
+
+sudo apt install nfs-kernel-server -y
+
+sudo mkdir -p /mnt/nfs/docker_client
+sudo mount 192.168.56.9:/mnt/nfs/share_dck_data	/mnt/nfs/docker_client
 
 #######################################################################
 #
@@ -64,30 +81,32 @@ sudo -H -u vagrant echo $(mkcert -install)
 #
 #######################################################################
 
-export APP_SHARED=/vagrant/shared
+export APP_SHARED=/home/vagrant/shared
 mkdir -p $APP_SHARED/certs
 
 sudo -H -u vagrant mkcert -cert-file $APP_SHARED/certs/traefik.crt \
 	-key-file $APP_SHARED/certs/traefik.key \
 	"developer.dck" "*.developer.dck"
 
-sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey /vagrant/shared/certs/traefik.key -in /vagrant/shared/certs/traefik.crt -passin pass:changeit -passout pass:changeit
+sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey 
+/vagrant/shared/certs/traefik.key -in /vagrant/shared/certs/traefik.crt -passin pass:changeit 
+-passout pass:changeit
 
 #######################################################################
 #
 #	Downloading PostgreSQL Database Example
 #
 #######################################################################
-mkdir $HOME/postgres-examples
+mkdir -p $HOME/postgres-examples
 wget -o $HOME/postgres-examples/dvdrental.zip https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip
-wget -o $HOME/postgres-examples/demo-big-en.zip https://edu.postgrespro.com/demo-big-en.zip 
+wget -o $HOME/postgres-examples/demo-big-en.zip https://edu.postgrespro.com/demo-big-en.zip
 
 #######################################################################
 #
 #	Init Development Environment
 #
 #######################################################################
-
+    
 sudo docker volume create pgdata-kc
 sudo docker volume create pgdata-lr
 sudo docker volume create mysqldata-st
@@ -130,3 +149,42 @@ sudo ufw allow 443
 # https://ldap.developer.dck/
 # login DN: cn=admin,dc=developer,dc=dck
 # password: Ldap2024..
+
+# Static table lookup for hostnames.
+# See hosts(5) for details.
+
+
+#######################################################################
+#
+#	/etc/hosts File
+#
+#######################################################################
+#127.0.0.1   localhost localhost.localdomain
+#::1         localhost localhost.localdomain
+#
+## K8S Cluster
+#192.168.56.11 k8s-master-1
+#192.168.56.12 k8s-node-1
+#192.168.56.13 k8s-node-2
+#192.168.56.14 k8s-node-3
+#
+## Docker Services
+#192.168.56.10 traefik.developer.dck
+#192.168.56.10 logs.developer.dck
+#192.168.56.10 portainer.developer.dck
+#192.168.56.10 whoami.developer.dck
+#192.168.56.10 redis.developer.dck
+#192.168.56.10 pgadmin.developer.dck
+#192.168.56.10 me.developer.dck
+#192.168.56.10 keycloak.developer.dck
+#192.168.56.10 jaeger.developer.dck
+#192.168.56.10 prometheus.developer.dck
+#192.168.56.10 rabbit.developer.dck
+#
+#192.168.56.10 keycloak.postgres.developer.dck
+#192.168.56.10 learning.postgres.developer.dck
+#
+#192.168.56.10 grafana.developer.dck
+#192.168.56.10 influxdb.developer.dck
+#192.168.56.10 ldap.developer.dck
+#192.168.56.10 jenkins.developer.dck
