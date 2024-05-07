@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-UBUNTU_BOX    = "bento/ubuntu-22.04"
+UBUNTU_BOX    = "bento/ubuntu-24.04"
 PROVIDER      = "virtualbox"
 PROVISION_SHELL = "shell"
 VM_NAME       = "server-docker"
