@@ -1,670 +1,692 @@
-#######################################################################
-#
-# Docker Compose With a Complete Development Environment
-# @Author : Wilman Ortiz
-# @Copyright (c) developer.io
-# @CreateAt : 11-02-2024
-#
-#######################################################################
-version: "3.9"
-
 networks:
-  ntw_development:
-    external: true
+    ntw_development:
+        external: true
 
 volumes:
-  portainer-data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: ${PORTAINER_DATA}
-  keycloak-data:
-  pgdata-kc:
-    external: true
-  pgdata-lr:
-    external: true
-  mysqldata-st:
-    external: true
-  mongo-st:
-    external: true
-  pgadmin:
-    external: true   
-  redis_data:
-    external: true
-  influxdb-storage:
-    external: true
-  grafana-storage:
-    external: true
+    portainer-data:
+        driver: local
+        driver_opts:
+            o: bind
+            type: none
+            device: ${PORTAINER_DATA}
+    keycloak-data:
+    pgdata-kc:
+        external: true
+    pgdata-lr:
+        external: true
+    mysqldata-st:
+        external: true
+    mongo-st:
+        external: true
+    pgadmin:
+        external: true
+    redis_data:
+        external: true
+    influxdb-storage:
+        external: true
+    grafana-storage:
+        external: true
+    ubuntu-storage:
+        external: true
+    oracle-data:
+        external: true
+    oracle-backup:
+        external: true
 
 services:
+    socket-proxy:
+        image: tecnativa/docker-socket-proxy:latest
+        container_name: server_socket_proxy
+        restart: always
+        security_opt:
+            - no-new-privileges
+        ports:
+            - 2375:2375
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - LOG_LEVEL=info
+            - EVENTS=1
+            - PING=1
+            - VERSION=1
+            - AUTH=0
+            - SECRETS=0
+            - POST=1
+            - BUILD=0
+            - COMMIT=0
+            - CONFIGS=0
+            - CONTAINERS=1
+            - DISTRIBUTION=0
+            - EXEC=0
+            - IMAGES=1
+            - INFO=1
+            - NETWORKS=1
+            - NODES=0
+            - PLUGINS=0
+            - SERVICES=1
+            - SESSION=0
+            - SWARM=0
+            - SYSTEM=0
+            - TASKS=1
+            - VOLUMES=1
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
 
-  socket-proxy:
-    image: tecnativa/docker-socket-proxy:latest
-    container_name: server_socket_proxy
-    restart: always
-    security_opt:
-      - no-new-privileges
-    ports:
-      - 2375:2375
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-      - LOG_LEVEL=info
-      - EVENTS=1
-      - PING=1
-      - VERSION=1
-      - AUTH=0
-      - SECRETS=0
-      - POST=1
-      - BUILD=0
-      - COMMIT=0
-      - CONFIGS=0
-      - CONTAINERS=1
-      - DISTRIBUTION=0
-      - EXEC=0
-      - IMAGES=1
-      - INFO=1
-      - NETWORKS=1
-      - NODES=0
-      - PLUGINS=0
-      - SERVICES=1
-      - SESSION=0
-      - SWARM=0
-      - SYSTEM=0
-      - TASKS=1
-      - VOLUMES=1
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-  
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: services_watchtower
-    restart: always
-    security_opt:
-      - no-new-privileges
-    command:
-      - '--host=tcp://socket-proxy:2375'
-      - '--schedule=0 30 4 * * *'
-      - '--debug'
-      - '--stop-timeout=5m'
-      - '--cleanup'
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-    depends_on:
-      - socket-proxy
-  
-  dozzle:
-    image: amir20/dozzle:latest
-    container_name: services_dozzle
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-      - DOZZLE_LEVEL=info
-      - DOZZLE_TAILSIZE=500
-      - DOZZLE_FILTER="status=running"
-      - DOCKER_HOST=tcp://socket-proxy:2375
-    depends_on:
-      - socket-proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.dozzle.rule=Host(`logs.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.dozzle.tls=true"
-      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
-  
-  traefik:
-    image: traefik:v3.0.0-rc3
-    container_name: server_traefik
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    ports:
-      - 80:80
-      - 443:443
-      - 8080:8080
-      - 8443:8443
-      - 5432:5432
-      - 7000:700
-      - 15672:15672
-      - 5672:5672
-      - 16686:16686
-      - 9090:9090
-      - 3000:3000
-      - 50000:50000
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-    volumes:
-      - /vagrant/shared/config/traefik/tls.yaml:/etc/traefik/dynamic.yaml:ro
-      - /vagrant/shared/config/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
-      - /vagrant/shared/certs:/etc/certs:ro
-    depends_on:
-      - socket-proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.server_traefik=true"
-      - "traefik.http.routers.server_traefik.tls=true"
-      - "traefik.http.services.server_traefik.loadbalancer.server.port=8080"
-  
-  portainer:    
-    image: portainer/portainer-ce:latest
-    container_name: server_portainer
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-    volumes:
-      - portainer-data:/data
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --admin-password "$$2y$$05$$nzBD8N0UnpSdAAbngQ4oAed3movf3R4wDO947B68IhHPtZ71YDkQ6" -H unix:///var/run/docker.sock # Portainer2024..
-    depends_on:
-      - socket-proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.portainer.tls=true"
-      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
- 
-  whoami:
-    image: containous/whoami
-    container_name: server_whoami
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.whoami.tls=true"  
-  
-  postgres-kc:
-    image: postgres:latest
-    container_name: server_postgres_kc
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-      - POSTGRES_DB=${KC_DB_NAME}
-      - POSTGRES_USER=${KC_DB_USERNAME}
-      - POSTGRES_PASSWORD=${KC_DB_PASSWORD}
-      - PGDATA=/var/lib/postgresql/data
-    volumes:
-      - pgdata-kc:/var/lib/postgresql/data
-    healthcheck:
-      test: "exit 0"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.tcp.routers.postgres-kc.entrypoints=postgres"
-      - "traefik.tcp.routers.postgres-kc.rule=HostSNI(`keycloak.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
-      - "traefik.tcp.routers.postgres-kc.tls=true"
-      - "traefik.tcp.routers.postgres-kc.tls.passthrough=false"
-      - "traefik.tcp.services.postgres-kc.loadbalancer.server.port=5432"
-  
-  postgres-lr:
-    image: postgres:latest
-    container_name: server_postgres_lr
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-      - POSTGRES_DB=${LEARNING_DATABASE_NAME}
-      - POSTGRES_USER=${LEARNING_DATABASE_USERNAME}
-      - POSTGRES_PASSWORD=${LEARNING_DATABASE_PASSWORD}
-      - PGDATA=/var/lib/postgresql/data
-    volumes:
-      - pgdata-lr:/var/lib/postgresql/data
-    healthcheck:
-      test: "exit 0"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.tcp.routers.postgres-lr.entrypoints=postgres"
-      - "traefik.tcp.routers.postgres-lr.rule=HostSNI(`learning.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
-      - "traefik.tcp.routers.postgres-lr.tls=true"
-      - "traefik.tcp.routers.postgres-lr.tls.passthrough=false"
-      - "traefik.tcp.services.postgres-lr.loadbalancer.server.port=5432"
-  
-  mysql-st:
-    image: mysql:latest
-    container_name: server_mysql_st
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    ports:
-      - 3306:3306
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ    
-      - MYSQL_DATABASE=${STUDY_DATABASE_NAME}    
-      - MYSQL_USER=${STUDY_DATABASE_USERNAME}
-      - MYSQL_PASSWORD=${STUDY_DATABASE_PASSWORD}
-      - MYSQL_ROOT_PASSWORD=${STUDY_DATABASE_ROOT_PASSWORD}
-      - MYSQL_ROOT_HOST='%'
-    volumes:
-      - mysqldata-st:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "--silent"]
-      start_period: 5s
-      interval: 5s
-      timeout: 5s
-      retries: 3
-#    labels:
-#      - "traefik.enable=true"
-#      - "traefik.docker.network=ntw_development"
-#      - "traefik.tcp.routers.mysql-st.entrypoints=mysql"
-#      - "traefik.tcp.routers.mysql-st.service=mysql"
-#      - "traefik.tcp.routers.mysql-st.rule=HostSNI(`study.${DOMAIN_DEVELOPMENT_MYSQL}`)"
-#      - "traefik.tcp.routers.mysql-st.tls=true"
-#      - "traefik.tcp.routers.mysql-st.tls.passthrough=false"
-#      - "traefik.tcp.services.mysql.loadbalancer.server.port=3306"
+    watchtower:
+        image: containrrr/watchtower:latest
+        container_name: services_watchtower
+        restart: always
+        security_opt:
+            - no-new-privileges
+        command:
+            - "--host=tcp://socket-proxy:2375"
+            - "--schedule=0 30 4 * * *"
+            - "--debug"
+            - "--stop-timeout=5m"
+            - "--cleanup"
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+        depends_on:
+            - socket-proxy
 
-  mongo:
-    image: mongo:latest
-    container_name: server_mongo_st
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    ports:
-      - 27017:27017      
-    environment:
-      - TZ=$TZ    
-      - MONGO_INITDB_DATABASE=${MONGO_DATABASE_NAME}
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_DATABASE_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_DATABASE_PASSWORD}
-    volumes:
-      - mongo-st:/data/db
-#    labels:
-#      - "traefik.enable=true"
-#      - "traefik.docker.network=ntw_development"
-#      - "traefik.tcp.routers.mongo.entrypoints=mongo"
-#      - "traefik.tcp.routers.mongo.service=mongo"
-#      - "traefik.tcp.routers.mongo.rule=HostSNI(`*`)"
-#      #- "traefik.tcp.routers.mongo.tls=true"
-#      #- "traefik.tcp.routers.mongo.tls.passthrough=false"
-#      #- "traefik.tcp.routers.mongo.tls.domains[0].main=${DOMAIN_DEVELOPMENT_MONGO}"
-#      - "traefik.tcp.services.mongo.loadbalancer.server.port=27017"     
+    dozzle:
+        image: amir20/dozzle:latest
+        container_name: services_dozzle
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - DOZZLE_LEVEL=info
+            - DOZZLE_TAILSIZE=500
+            - DOZZLE_FILTER="status=running"
+            - DOCKER_HOST=tcp://socket-proxy:2375
+        depends_on:
+            - socket-proxy
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.dozzle.rule=Host(`logs.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.dozzle.tls=true"
+            - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
-  redis:
-    image: redis:latest
-    container_name: server_redis
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    entrypoint: [ "redis-server", "/etc/redis/redis.conf" ]
-    command: ["--cluster-enabled", "yes", "--cluster-config-file", "/data/nodes.conf", "--appendonly", "yes", "--requirepass", "$${REDIS_HOST_PASSWORD}"]
-    environment:
-      - TZ=$TZ    
-      - DOCKER_CONTENT_TRUST=0
-    volumes:
-      - redis_data:/data
-      - ./redis/redis.conf:/etc/redis/redis.conf
-      - ./redis/redis-7000.conf:/etc/redis/redis-7000.conf
-      - ./redis/redis-7001.conf:/etc/redis/redis-7001.conf
-      - ./redis/redis-7002.conf:/etc/redis/redis-7002.conf
-      - ./redis/redis-7003.conf:/etc/redis/redis-7003.conf
-      - ./redis/redis-7004.conf:/etc/redis/redis-7004.conf
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.tcp.routers.redis.entrypoints=redis"
-      - "traefik.tcp.routers.redis.service=redis"
-      - "traefik.tcp.routers.redis.rule=HostSNI(`redis.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.tcp.routers.redis.tls=true"
-      - "traefik.tcp.routers.redis.tls.passthrough=false"
-      - "traefik.tcp.services.redis.loadbalancer.server.port=7000"         
+    traefik:
+        image: traefik:v3.0.0-rc3
+        container_name: server_traefik
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 80:80
+            - 443:443
+            - 8080:8080
+            - 8443:8443
+            - 5432:5432
+            - 7000:700
+            - 15672:15672
+            - 5672:5672
+            - 16686:16686
+            - 9090:9090
+            - 3000:3000
+            - 50000:50000
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+        volumes:
+            - /vagrant/shared/config/traefik/tls.yaml:/etc/traefik/dynamic.yaml:ro
+            - /vagrant/shared/config/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+            - /vagrant/shared/certs:/etc/certs:ro
+        depends_on:
+            - socket-proxy
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.server_traefik=true"
+            - "traefik.http.routers.server_traefik.tls=true"
+            - "traefik.http.services.server_traefik.loadbalancer.server.port=8080"
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: server_pgadmin
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development      
-    environment:
-      - TZ=$TZ
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
-      - PGADMIN_CONFIG_SERVER_MODE=${PGADMIN_CONFIG_SERVER_MODE}
-    volumes:
-      - pgadmin:/var/lib/pgadmin
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.pgadmin.tls=true"
+    portainer:
+        image: portainer/portainer-ce:latest
+        container_name: server_portainer
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+        volumes:
+            - portainer-data:/data
+            - /var/run/docker.sock:/var/run/docker.sock
+        command: --admin-password "$$2y$$05$$nzBD8N0UnpSdAAbngQ4oAed3movf3R4wDO947B68IhHPtZ71YDkQ6" -H unix:///var/run/docker.sock
+        # Portainer2024..
+        depends_on:
+            - socket-proxy
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.portainer.tls=true"
+            - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
-  mongo-express:
-    image: mongo-express:latest
-    container_name: server_mongo_express
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development 
-    environment:
-      - TZ=$TZ
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER}
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD}
-      - ME_CONFIG_BASICAUTH_USERNAME=${MONGOEXPRESS_LOGIN}
-      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGOEXPRESS_PASSWORD}
-      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_DATABASE_USERNAME}:${MONGO_DATABASE_PASSWORD}@mongo:27017/
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.mongo-express.rule=Host(`me.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.mongo-express.tls=true"
-      - "traefik.http.services.mongo-express.loadbalancer.server.port=8081"
-    depends_on:
-      - mongo
+    whoami:
+        image: containous/whoami
+        container_name: server_whoami
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.whoami.tls=true"
 
-  payara:
-    image: payara/server-full
-    container_name: server_payara
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    ports:
-      - "8082:8080"
-      - "8181:8181"
-      - "4848:4848"
-      - "9009:9009"
-#    environment:
-#    JVM_ARGS: ""
-#     - "AS_ADMIN_MASTERPASSWORD=admin" #default password is `changeit`
-    volumes:
-      - ./deployments:/opt/payara/deployments
-    environment:
-      - TZ=$TZ    
-      - ADMIN_USER=${PAYARA_ADMIN_USERNAME}
-      - ADMIN_PASSWORD=${PAYARA_ADMIN_PASSWORD}    
-  
-  rabbit:
-    image: rabbitmq:3-management
-    container_name: server_rabbit
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ 
-      - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
-    volumes:
-      - ./rabbit/enabled_plugins:/etc/rabbitmq/enabled_plugins
-    labels:
-      - "NAME=rabbitmq"
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.rabbit.rule=Host(`rabbit.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.rabbit.tls=true"
-      - "traefik.http.services.rabbit.loadbalancer.server.port=15672"
+    postgres-kc:
+        image: postgres:latest
+        container_name: server_postgres_kc
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - POSTGRES_DB=${KC_DB_NAME}
+            - POSTGRES_USER=${KC_DB_USERNAME}
+            - POSTGRES_PASSWORD=${KC_DB_PASSWORD}
+            - PGDATA=/var/lib/postgresql/data
+        volumes:
+            - pgdata-kc:/var/lib/postgresql/data
+        healthcheck:
+            test: "exit 0"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.tcp.routers.postgres-kc.entrypoints=postgres"
+            - "traefik.tcp.routers.postgres-kc.rule=HostSNI(`keycloak.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
+            - "traefik.tcp.routers.postgres-kc.tls=true"
+            - "traefik.tcp.routers.postgres-kc.tls.passthrough=false"
+            - "traefik.tcp.services.postgres-kc.loadbalancer.server.port=5432"
 
-  keycloak:
-    image: quay.io/keycloak/keycloak:latest
-    container_name: server_keycloak
-    entrypoint: /opt/keycloak/bin/kc.sh start
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-      - KC_HOSTNAME=keycloak.${DOMAIN_DEVELOPMENT}
-      - KC_PROXY_ADDRESS_FORWARDING=true
-      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
-      - KC_HOSTNAME_STRICT=false
-      - KC_HOSTNAME_STRICT_HTTPS=false
-      - KC_HTTP_ENABLED=true
-      - KC_DB=${KC_DB}
-      - KC_DB_URL=jdbc:postgresql://server_postgres_kc:${KC_DB_PORT}/${KC_DB_NAME}
-      - KC_DB_USERNAME=${KC_DB_USERNAME}
-      - KC_DB_PASSWORD=${KC_DB_PASSWORD}
-      - KC_PROXY=${KC_PROXY}
-      - KEYCLOAK_LOGLEVEL=DEBUG
-      - ROOT_LOGLEVEL=DEBUG
-    healthcheck:
-      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 90s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.keycloak.entrypoints=https"
-      - "traefik.http.routers.keycloak.rule=Host(`keycloak.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.keycloak.tls=true"
-      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+    postgres-lr:
+        image: postgres:latest
+        container_name: server_postgres_lr
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - POSTGRES_DB=${LEARNING_DATABASE_NAME}
+            - POSTGRES_USER=${LEARNING_DATABASE_USERNAME}
+            - POSTGRES_PASSWORD=${LEARNING_DATABASE_PASSWORD}
+            - PGDATA=/var/lib/postgresql/data
+        volumes:
+            - pgdata-lr:/var/lib/postgresql/data
+        healthcheck:
+            test: "exit 0"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.tcp.routers.postgres-lr.entrypoints=postgres"
+            - "traefik.tcp.routers.postgres-lr.rule=HostSNI(`learning.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
+            - "traefik.tcp.routers.postgres-lr.tls=true"
+            - "traefik.tcp.routers.postgres-lr.tls.passthrough=false"
+            - "traefik.tcp.services.postgres-lr.loadbalancer.server.port=5432"
 
-  openldap:
-    image: osixia/openldap:latest
-    container_name: server_ldap
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-      - LDAP_ORGANISATION="Developer Inc."
-      - LDAP_DOMAIN=${LDAP_DOMAIN}
-      - LDAP_ADMIN_USERNAME=${LDAP_ADMIN_USERNAME}
-      - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
-      - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
-      - "LDAP_BASE_DN=dc=developer,dc=dck"
-      - LDAP_READONLY_USER="false"
-      - LDAP_TLS="false"
-      - LDAP_RFC2307BIS_SCHEMA="false"
-      - LDAP_SEED_INTERNAL_LDIF_PATH=/resources/
-    volumes:
-      - ./ldap/embedded-ldap.ldif:/resources/embedded-ldap.ldif
+    mysql-st:
+        image: mysql:8.0.39
+        container_name: server_mysql_st
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 3306:3306
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - MYSQL_DATABASE=${STUDY_DATABASE_NAME}
+            - MYSQL_USER=${STUDY_DATABASE_USERNAME}
+            - MYSQL_PASSWORD=${STUDY_DATABASE_PASSWORD}
+            - MYSQL_ROOT_PASSWORD=${STUDY_DATABASE_ROOT_PASSWORD}
+            - MYSQL_ROOT_HOST='%'
+        volumes:
+            - mysqldata-st:/var/lib/mysql
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "--silent"]
+            start_period: 5s
+            interval: 5s
+            timeout: 5s
+            retries: 3
 
-  ldapadmin:
-    image: osixia/phpldapadmin:latest
-    container_name: server_ldapadmin
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-      - PHPLDAPADMIN_LDAP_HOSTS=server_ldap
-      - PHPLDAPADMIN_HTTPS=false
-    depends_on:
-      - openldap
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.ldapadmin.rule=Host(`ldap.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.ldapadmin.tls=true"
-      - "traefik.http.services.ldapadmin.loadbalancer.server.port=80"
+    oracle-st:
+        image: gvenzl/oracle-xe:latest
+        container_name: server_oracle_st
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        ports:
+            - 1521:1521
+        environment:
+            - ORACLE_ALLOW_REMOTE=true
+            - ORACLE_PASSWORD=Oracle2024..
+       
+        volumes:
+        - oracle-data:/opt/oracle/oradata
 
-  jaeger:
-    image: jaegertracing/all-in-one:${JAEGER_IMAGE_TAG:-latest}
-    container_name: server_jaeger
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development    
-    environment:
-      - TZ=$TZ 
-      - METRICS_STORAGE_TYPE=prometheus
-      - PROMETHEUS_SERVER_URL=http://prometheus:9090
-      - PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR=${PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR:-true}
-      - PROMETHEUS_QUERY_NAMESPACE=${PROMETHEUS_QUERY_NAMESPACE:-}
-      - PROMETHEUS_QUERY_DURATION_UNIT=${PROMETHEUS_QUERY_DURATION_UNIT:-}
-      - PROMETHEUS_QUERY_NORMALIZE_CALLS=true
-      - PROMETHEUS_QUERY_NORMALIZE_DURATION=true
-    volumes:
-      - ./tracing/jaeger-ui.json:/etc/jaeger/jaeger-ui.json
-    command: --query.ui-config /etc/jaeger/jaeger-ui.json
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.jaeger.rule=Host(`jaeger.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.jaeger.tls=true"
-      - "traefik.http.services.jaeger.loadbalancer.server.port=16686"    
-  
-  otel:
-    image: otel/opentelemetry-collector-contrib:${OTEL_IMAGE_TAG:-latest}
-    container_name: server_otel
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ 
-    volumes:
-      - ${OTEL_CONFIG_SRC:-./otel/otel-collector-config-connector.yml}:/etc/otelcol/otel-collector-config.yml
-    command: --config /etc/otelcol/otel-collector-config.yml
-    depends_on:
-      - jaeger
+    mongo:
+        image: mongo:latest
+        container_name: server_mongo_st
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        ports:
+            - 27017:27017
+        environment:
+            - TZ=$TZ
+            - MONGO_INITDB_DATABASE=${MONGO_DATABASE_NAME}
+            - MONGO_INITDB_ROOT_USERNAME=${MONGO_DATABASE_USERNAME}
+            - MONGO_INITDB_ROOT_PASSWORD=${MONGO_DATABASE_PASSWORD}
+        volumes:
+            - mongo-st:/data/db
 
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: server_prometheus
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.prometheus.tls=true"
-      - "traefik.http.services.prometheus.loadbalancer.server.port=9090" 
+    redis:
+        image: redis:latest
+        container_name: server_redis
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        entrypoint: ["redis-server", "/etc/redis/redis.conf"]
+        command:
+            [
+                "--cluster-enabled",
+                "yes",
+                "--cluster-config-file",
+                "/data/nodes.conf",
+                "--appendonly",
+                "yes",
+                "--requirepass",
+                "$${REDIS_HOST_PASSWORD}",
+            ]
+        environment:
+            - TZ=$TZ
+            - DOCKER_CONTENT_TRUST=0
+        volumes:
+            - redis_data:/data
+            - ./redis/redis.conf:/etc/redis/redis.conf
+            - ./redis/redis-7000.conf:/etc/redis/redis-7000.conf
+            - ./redis/redis-7001.conf:/etc/redis/redis-7001.conf
+            - ./redis/redis-7002.conf:/etc/redis/redis-7002.conf
+            - ./redis/redis-7003.conf:/etc/redis/redis-7003.conf
+            - ./redis/redis-7004.conf:/etc/redis/redis-7004.conf
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.tcp.routers.redis.entrypoints=redis"
+            - "traefik.tcp.routers.redis.service=redis"
+            - "traefik.tcp.routers.redis.rule=HostSNI(`redis.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.tcp.routers.redis.tls=true"
+            - "traefik.tcp.routers.redis.tls.passthrough=false"
+            - "traefik.tcp.services.redis.loadbalancer.server.port=7000"
 
-  influxdb:
-    image: influxdb:latest
-    container_name: server_influxdb
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    ports:
-      - '8086:8086'
-    volumes:
-      - influxdb-storage:/var/lib/influxdb
-    environment:
-      - TZ=$TZ
-      - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME}
-      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
-      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
-      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
+    pgadmin:
+        image: dpage/pgadmin4
+        container_name: server_pgadmin
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+            - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+            - PGADMIN_CONFIG_SERVER_MODE=${PGADMIN_CONFIG_SERVER_MODE}
+        volumes:
+            - pgadmin:/var/lib/pgadmin
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.pgadmin.tls=true"
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: server_grafana
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
-      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
-    volumes:
-      - grafana-storage:/var/lib/grafana
-      - ./grafana/:/etc/grafana/provisioning/
-    depends_on:
-      - influxdb
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.grafana.tls=true"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    mongo-express:
+        image: mongo-express:latest
+        container_name: server_mongo_express
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER}
+            - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD}
+            - ME_CONFIG_BASICAUTH_USERNAME=${MONGOEXPRESS_LOGIN}
+            - ME_CONFIG_BASICAUTH_PASSWORD=${MONGOEXPRESS_PASSWORD}
+            - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_DATABASE_USERNAME}:${MONGO_DATABASE_PASSWORD}@mongo:27017/
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.mongo-express.rule=Host(`me.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.mongo-express.tls=true"
+            - "traefik.http.services.mongo-express.loadbalancer.server.port=8081"
+        depends_on:
+            - mongo
 
-  localstack:
-    image: localstack/localstack
-    container_name: "${LOCALSTACK_DOCKER_NAME:-server_localstack}"
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    ports:
-      - "127.0.0.1:4566:4566"
-      - "127.0.0.1:4510-4559:4510-4559"
-    environment:
-      - TZ=$TZ
-      - DEBUG=${DEBUG:-0}
-    volumes:
-      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
-    depends_on:
-      - socket-proxy
+    payara:
+        image: payara/server-full
+        container_name: server_payara
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        ports:
+            - "8082:8080"
+            - "8181:8181"
+            - "4848:4848"
+            - "9009:9009"
+        #    environment:
+        #    JVM_ARGS: ""
+        #     - "AS_ADMIN_MASTERPASSWORD=admin" #default password is `changeit`
+        volumes:
+            - ./deployments:/opt/payara/deployments
+        environment:
+            - TZ=$TZ
+            - ADMIN_USER=${PAYARA_ADMIN_USERNAME}
+            - ADMIN_PASSWORD=${PAYARA_ADMIN_PASSWORD}
 
-  jenkins:
-    image: jenkins/jenkins:lts
-    container_name: server_jenkins
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ntw_development
-    environment:
-      - TZ=$TZ
-    privileged: true
-    user: root
-    volumes:
-      - ~/jenkins_home:/var/jenkins_home
-    depends_on:
-      - socket-proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=ntw_development"
-      - "traefik.http.routers.jenkins.rule=Host(`jenkins.${DOMAIN_DEVELOPMENT}`)"
-      - "traefik.http.routers.jenkins.tls=true"
-      - "traefik.http.services.jenkins.loadbalancer.server.port=8080"
+    rabbit:
+        image: rabbitmq:3-management
+        container_name: server_rabbit
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
+            - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+            - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+            - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
+        volumes:
+            - ./rabbit/enabled_plugins:/etc/rabbitmq/enabled_plugins
+        labels:
+            - "NAME=rabbitmq"
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.rabbit.rule=Host(`rabbit.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.rabbit.tls=true"
+            - "traefik.http.services.rabbit.loadbalancer.server.port=15672"
+
+    keycloak:
+        image: quay.io/keycloak/keycloak:latest
+        container_name: server_keycloak
+        entrypoint: /opt/keycloak/bin/kc.sh start
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - KC_HOSTNAME=keycloak.${DOMAIN_DEVELOPMENT}
+            - KC_PROXY_ADDRESS_FORWARDING=true
+            - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+            - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+            - KC_HOSTNAME_STRICT=false
+            - KC_HOSTNAME_STRICT_HTTPS=false
+            - KC_HTTP_ENABLED=true
+            - KC_DB=${KC_DB}
+            - KC_DB_URL=jdbc:postgresql://server_postgres_kc:${KC_DB_PORT}/${KC_DB_NAME}
+            - KC_DB_USERNAME=${KC_DB_USERNAME}
+            - KC_DB_PASSWORD=${KC_DB_PASSWORD}
+            - KC_PROXY=${KC_PROXY}
+            - KEYCLOAK_LOGLEVEL=DEBUG
+            - ROOT_LOGLEVEL=DEBUG
+        healthcheck:
+            test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 90s
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.keycloak.entrypoints=https"
+            - "traefik.http.routers.keycloak.rule=Host(`keycloak.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.keycloak.tls=true"
+            - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+
+    openldap:
+        image: osixia/openldap:latest
+        container_name: server_ldap
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - LDAP_ORGANISATION="Developer Inc."
+            - LDAP_DOMAIN=${LDAP_DOMAIN}
+            - LDAP_ADMIN_USERNAME=${LDAP_ADMIN_USERNAME}
+            - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
+            - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
+            - "LDAP_BASE_DN=dc=developer,dc=dck"
+            - LDAP_READONLY_USER="false"
+            - LDAP_TLS="false"
+            - LDAP_RFC2307BIS_SCHEMA="false"
+            - LDAP_SEED_INTERNAL_LDIF_PATH=/resources/
+        volumes:
+            - ./ldap/embedded-ldap.ldif:/resources/embedded-ldap.ldif
+
+    ldapadmin:
+        image: osixia/phpldapadmin:latest
+        container_name: server_ldapadmin
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - PHPLDAPADMIN_LDAP_HOSTS=server_ldap
+            - PHPLDAPADMIN_HTTPS=false
+        depends_on:
+            - openldap
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.ldapadmin.rule=Host(`ldap.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.ldapadmin.tls=true"
+            - "traefik.http.services.ldapadmin.loadbalancer.server.port=80"
+
+    jaeger:
+        image: jaegertracing/all-in-one:${JAEGER_IMAGE_TAG:-latest}
+        container_name: server_jaeger
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - METRICS_STORAGE_TYPE=prometheus
+            - PROMETHEUS_SERVER_URL=http://prometheus:9090
+            - PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR=${PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR:-true}
+            - PROMETHEUS_QUERY_NAMESPACE=${PROMETHEUS_QUERY_NAMESPACE:-}
+            - PROMETHEUS_QUERY_DURATION_UNIT=${PROMETHEUS_QUERY_DURATION_UNIT:-}
+            - PROMETHEUS_QUERY_NORMALIZE_CALLS=true
+            - PROMETHEUS_QUERY_NORMALIZE_DURATION=true
+        volumes:
+            - ./tracing/jaeger-ui.json:/etc/jaeger/jaeger-ui.json
+        command: --query.ui-config /etc/jaeger/jaeger-ui.json
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.jaeger.rule=Host(`jaeger.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.jaeger.tls=true"
+            - "traefik.http.services.jaeger.loadbalancer.server.port=16686"
+
+    otel:
+        image: otel/opentelemetry-collector-contrib:${OTEL_IMAGE_TAG:-latest}
+        container_name: server_otel
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+        volumes:
+            - ${OTEL_CONFIG_SRC:-./otel/otel-collector-config-connector.yml}:/etc/otelcol/otel-collector-config.yml
+        command: --config /etc/otelcol/otel-collector-config.yml
+        depends_on:
+            - jaeger
+
+    prometheus:
+        image: prom/prometheus:latest
+        container_name: server_prometheus
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+        volumes:
+            - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.prometheus.tls=true"
+            - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+
+    influxdb:
+        image: influxdb:latest
+        container_name: server_influxdb
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        ports:
+            - "8086:8086"
+        volumes:
+            - influxdb-storage:/var/lib/influxdb
+        environment:
+            - TZ=$TZ
+            - DOCKER_INFLUXDB_INIT_MODE=setup
+            - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME}
+            - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
+            - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+            - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+            - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
+
+    grafana:
+        image: grafana/grafana:latest
+        container_name: server_grafana
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+            - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
+            - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+            - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+            - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+            - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
+        volumes:
+            - grafana-storage:/var/lib/grafana
+            - ./grafana/:/etc/grafana/provisioning/
+        depends_on:
+            - influxdb
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.grafana.tls=true"
+            - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+    localstack:
+        image: localstack/localstack
+        container_name: "${LOCALSTACK_DOCKER_NAME:-server_localstack}"
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        ports:
+            - "127.0.0.1:4566:4566"
+            - "127.0.0.1:4510-4559:4510-4559"
+        environment:
+            - TZ=$TZ
+            - DEBUG=${DEBUG:-0}
+        volumes:
+            - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+        depends_on:
+            - socket-proxy
+
+    jenkins:
+        image: jenkins/jenkins:lts
+        container_name: server_jenkins
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+        privileged: true
+        user: root
+        volumes:
+            - ~/jenkins_home:/var/jenkins_home
+        depends_on:
+            - socket-proxy
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.jenkins.rule=Host(`jenkins.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.jenkins.tls=true"
+            - "traefik.http.services.jenkins.loadbalancer.server.port=8080"
+
+    ubuntu:
+        image: ubuntu:latest
+        container_name: server_ubuntu_lab
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        environment:
+            - TZ=$TZ
+        privileged: true
+        user: root
+        volumes:
+            - ubuntu-storage:/mnt/data
+        depends_on:
+            - socket-proxy
+        tty: true
+### ---------------------------------------

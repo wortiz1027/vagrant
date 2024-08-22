@@ -88,9 +88,8 @@ sudo -H -u vagrant mkcert -cert-file $APP_SHARED/certs/traefik.crt \
 	-key-file $APP_SHARED/certs/traefik.key \
 	"developer.dck" "*.developer.dck"
 
-sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey 
-/vagrant/shared/certs/traefik.key -in /vagrant/shared/certs/traefik.crt -passin pass:changeit 
--passout pass:changeit
+sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey /vagrant/shared/certs/traefik.key -in \
+/vagrant/shared/certs/traefik.crt -passin pass:changeit -passout pass:changeit
 
 #######################################################################
 #
@@ -115,6 +114,9 @@ sudo docker volume create pgadmin
 sudo docker volume create redis_data
 sudo docker volume create influxdb-storage
 sudo docker volume create grafana-storage
+sudo docker volume create ubuntu-storage
+sudo docker volume create oracle-data
+sudo docker volume create oracle-backup
 
 sudo docker network create --driver bridge ntw_development
 
@@ -140,7 +142,7 @@ sudo ufw allow 443
 # docker volume create pgdata
 # sudo systemctl stop docker
 # sudo systemctl stop docker.socket
-# enable remote docker daemon execution => sudo dockerd -H unix:///var/run/docker.sock -H tcp://<remote-ip-address>
+# enable remote docker daemon execution => sudo dockerd -H unix:///var/run/docker.sock -H tcp://192.168.56.10
 # https://docker-docs.uclv.cu/engine/install/binaries/
 # docker stop $(docker ps -a -q)
 # docker rm $(docker ps -a -q)
@@ -153,6 +155,45 @@ sudo ufw allow 443
 # Static table lookup for hostnames.
 # See hosts(5) for details.
 
+#######################################################################
+#
+#	INSTALL DATABASE FOR POSTGRES
+#
+#######################################################################
+
+#docker exec -it server_postgres_lr /bin/bash
+
+#cd /home
+#wget https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip
+
+#unzip dvdrental.zip
+# pg_restore --host "server_postgres_lr" --port "5432" --username "learning" --no-password --dbname "dvdrental" --verbose
+#"/home/dvdrental.tar"
+
+#######################################################################
+#
+#	INSTALL DATABASE FOR MySQL
+#
+#######################################################################
+
+#docker exec -it server_mysql_st /bin/bash
+
+#microdnf install -y unzip wget
+
+#mkdir mysql
+#cd mysql/
+#wget https://www.mysqltutorial.org/wp-content/uploads/2023/10/mysqlsampledatabase.zip
+#wget https://downloads.mysql.com/docs/sakila-db.zip
+
+#unzip mysqlsampledatabase.zip
+#unzip sakila-db.zip
+
+#mysql -u root -p
+
+#mysql> source /home/mysql/mysqlsampledatabase.sql
+
+#mysql> source /home/mysql/sakila-db/sakila-schema.sql
+#mysql> source /home/mysql/sakila-db/sakila-data.sql
 
 #######################################################################
 #
