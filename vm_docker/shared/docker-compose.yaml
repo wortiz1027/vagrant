@@ -163,8 +163,7 @@ services:
         volumes:
             - portainer-data:/data
             - /var/run/docker.sock:/var/run/docker.sock
-        command: --admin-password "$$2y$$05$$nzBD8N0UnpSdAAbngQ4oAed3movf3R4wDO947B68IhHPtZ71YDkQ6" -H unix:///var/run/docker.sock
-        # Portainer2024..
+        command: --admin-password "$$2y$$05$$nzBD8N0UnpSdAAbngQ4oAed3movf3R4wDO947B68IhHPtZ71YDkQ6" -H unix:///var/run/docker.sock # Portainer2024..
         depends_on:
             - socket-proxy
         labels:
@@ -403,9 +402,6 @@ services:
             - "8181:8181"
             - "4848:4848"
             - "9009:9009"
-        #    environment:
-        #    JVM_ARGS: ""
-        #     - "AS_ADMIN_MASTERPASSWORD=admin" #default password is `changeit`
         volumes:
             - ./deployments:/opt/payara/deployments
         environment:

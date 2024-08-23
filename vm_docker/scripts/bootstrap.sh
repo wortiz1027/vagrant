@@ -161,14 +161,16 @@ sudo ufw allow 443
 #
 #######################################################################
 
-#docker exec -it server_postgres_lr /bin/bash
+# docker exec -it server_postgres_lr /bin/bash
 
-#cd /home
-#wget https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip
+# cd /home
+# mkdir postgres
+# apt update
+# apt install wger unzip
+# wget https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip
 
-#unzip dvdrental.zip
-# pg_restore --host "server_postgres_lr" --port "5432" --username "learning" --no-password --dbname "dvdrental" --verbose
-#"/home/dvdrental.tar"
+# unzip dvdrental.zip
+# pg_restore --host "localhost" --port "5432" --username "learning" --no-password --dbname "dvdrental" --verbose "/home/dvdrental.tar"
 
 #######################################################################
 #
@@ -176,24 +178,30 @@ sudo ufw allow 443
 #
 #######################################################################
 
-#docker exec -it server_mysql_st /bin/bash
+# docker exec -it server_mysql_st /bin/bash
 
-#microdnf install -y unzip wget
+# microdnf install -y unzip wget
 
-#mkdir mysql
-#cd mysql/
-#wget https://www.mysqltutorial.org/wp-content/uploads/2023/10/mysqlsampledatabase.zip
-#wget https://downloads.mysql.com/docs/sakila-db.zip
+# mkdir mysql
+# cd mysql/
+# wget https://www.mysqltutorial.org/wp-content/uploads/2023/10/mysqlsampledatabase.zip
+# wget https://downloads.mysql.com/docs/sakila-db.zip
 
-#unzip mysqlsampledatabase.zip
-#unzip sakila-db.zip
+# unzip mysqlsampledatabase.zip
+# unzip sakila-db.zip
 
-#mysql -u root -p
+# mysql -u root -p
 
-#mysql> source /home/mysql/mysqlsampledatabase.sql
+# mysql> source /home/mysql/mysqlsampledatabase.sql
 
-#mysql> source /home/mysql/sakila-db/sakila-schema.sql
-#mysql> source /home/mysql/sakila-db/sakila-data.sql
+# mysql> source /home/mysql/sakila-db/sakila-schema.sql
+# mysql> source /home/mysql/sakila-db/sakila-data.sql
+
+# CREATE USER 'sakila'@'%' IDENTIFIED WITH mysql_native_password BY 'sakila2024..';
+# GRANT ALL ON sakila.* TO 'sakila'@'%';
+
+# CREATE USER 'model'@'%' IDENTIFIED WITH mysql_native_password BY 'model2024..';
+# GRANT ALL ON classicmodels.* TO 'model'@'%';
 
 #######################################################################
 #
