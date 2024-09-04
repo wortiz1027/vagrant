@@ -48,3 +48,5 @@ entryPoints:
   #  address: ":4848"
   rabbit:
     address: ":15672"
+  insight:
+    address: ":5540"
