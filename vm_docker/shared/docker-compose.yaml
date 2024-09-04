@@ -116,7 +116,7 @@ services:
             - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
     traefik:
-        image: traefik:v3.0.0-rc3
+        image: traefik:v3.1.2
         container_name: server_traefik
         restart: always
         security_opt:
@@ -127,13 +127,13 @@ services:
             - 8080:8080
             - 8443:8443
             - 5432:5432
-            - 7000:700
             - 15672:15672
             - 5672:5672
             - 16686:16686
             - 9090:9090
             - 3000:3000
             - 50000:50000
+            - 5540:5540
         networks:
             - ntw_development
         environment:
@@ -303,46 +303,146 @@ services:
         volumes:
             - mongo-st:/data/db
 
-    redis:
+    redis-node-1:
         image: redis:latest
-        container_name: server_redis
+        container_name: server_redis_node_1
         restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7000:7000
+        networks:
+            - ntw_development
+        hostname: redis-node-1
+        volumes:
+            - ./redis/redis-7000.conf:/redis/redis-7000.conf
+        command: /bin/sh -c "redis-server /redis/redis-7000.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+          - .env
+
+    redis-node-2:
+        image: redis:latest
+        container_name: server_redis_node_2
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7001:7001
+        networks:
+            - ntw_development
+        hostname: redis-node-2
+        volumes:
+            - ./redis/redis-7001.conf:/redis/redis-7001.conf
+        command: /bin/sh -c "redis-server /redis/redis-7001.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
+
+    redis-node-3:
+        image: redis:latest
+        container_name: server_redis_node_3
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7002:7002
+        networks:
+            - ntw_development
+        hostname: redis-node-3
+        volumes:
+            - ./redis/redis-7002.conf:/redis/redis-7002.conf
+        command: /bin/sh -c "redis-server /redis/redis-7002.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
+
+    redis-node-4:
+        image: redis:latest
+        container_name: server_redis_node_4
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7003:7003
+        networks:
+            - ntw_development
+        hostname: redis-node-4
+        volumes:
+            - ./redis/redis-7003.conf:/redis/redis-7003.conf
+        command: /bin/sh -c "redis-server /redis/redis-7003.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
+
+    redis-node-5:
+        image: redis:latest
+        container_name: server_redis_node_5
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7004:7004
+        networks:
+            - ntw_development
+        hostname: redis-node-5
+        volumes:
+            - ./redis/redis-7004.conf:/redis/redis-7004.conf
+        command: /bin/sh -c "redis-server /redis/redis-7004.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
+
+    redis-node-6:
+        image: redis:latest
+        container_name: server_redis_node_6
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7005:7005
+        networks:
+            - ntw_development
+        hostname: redis-node-6
+        volumes:
+            - ./redis/redis-7005.conf:/redis/redis-7005.conf
+        command: /bin/sh -c "redis-server /redis/redis-7005.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
+
+    redis-cluster-creator:
+        image: redis:latest
+        container_name: server_redis_creator
+        ports:
+            - 6999:6999
+        networks:
+            - ntw_development
+        command: redis-cli -h server_redis_node_1 -p 7000 -a "${REDIS_HOST_PASSWORD}" --cluster create redis-node-1:7000 redis-node-2:7001 redis-node-3:7002 redis-node-4:7003 redis-node-5:7004 redis-node-6:7005 --cluster-replicas 1 --cluster-yes
+        env_file:
+            - .env
+        depends_on:
+            - redis-node-1
+            - redis-node-2
+            - redis-node-3
+            - redis-node-4
+            - redis-node-5
+            - redis-node-6
+
+    redis-insight:
+        image: redislabs/redisinsight:latest
+        container_name: server_redis_insight
+        restart: always
         security_opt:
             - no-new-privileges:true
         networks:
             - ntw_development
-        entrypoint: ["redis-server", "/etc/redis/redis.conf"]
-        command:
-            [
-                "--cluster-enabled",
-                "yes",
-                "--cluster-config-file",
-                "/data/nodes.conf",
-                "--appendonly",
-                "yes",
-                "--requirepass",
-                "$${REDIS_HOST_PASSWORD}",
-            ]
         environment:
             - TZ=$TZ
-            - DOCKER_CONTENT_TRUST=0
         volumes:
-            - redis_data:/data
-            - ./redis/redis.conf:/etc/redis/redis.conf
-            - ./redis/redis-7000.conf:/etc/redis/redis-7000.conf
-            - ./redis/redis-7001.conf:/etc/redis/redis-7001.conf
-            - ./redis/redis-7002.conf:/etc/redis/redis-7002.conf
-            - ./redis/redis-7003.conf:/etc/redis/redis-7003.conf
-            - ./redis/redis-7004.conf:/etc/redis/redis-7004.conf
+            - ./redis-insight:/db
+        depends_on:
+            - redis-cluster-creator
         labels:
             - "traefik.enable=true"
             - "traefik.docker.network=ntw_development"
-            - "traefik.tcp.routers.redis.entrypoints=redis"
-            - "traefik.tcp.routers.redis.service=redis"
-            - "traefik.tcp.routers.redis.rule=HostSNI(`redis.${DOMAIN_DEVELOPMENT}`)"
-            - "traefik.tcp.routers.redis.tls=true"
-            - "traefik.tcp.routers.redis.tls.passthrough=false"
-            - "traefik.tcp.services.redis.loadbalancer.server.port=7000"
+            - "traefik.http.routers.redis-insight.rule=Host(`insight.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.redis-insight.tls=true"
+            - "traefik.http.services.redis-insight.loadbalancer.server.port=5540"
 
     pgadmin:
         image: dpage/pgadmin4
@@ -685,4 +785,3 @@ services:
         depends_on:
             - socket-proxy
         tty: true
-### ---------------------------------------
