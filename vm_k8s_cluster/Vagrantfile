@@ -4,11 +4,11 @@
 UBUNTU_BOX        = "bento/ubuntu-24.04"
 IP_BASE           = "192.168.56."
 K8S_NAME          = "dev-k8s"
-K8S_KEY_VERSION   = "1.30"
-K8S_TOOLS_VERSION = "1.30.*"
+K8S_KEY_VERSION   = "1.31"
+K8S_TOOLS_VERSION = "1.31.*"
 OS_VERSION        = "xUbuntu_22.04"
-CRIO_VERSION      = "1.27"
-CALICO_VERSION    = "3.27.2"
+CRIO_VERSION      = "1.28"
+CALICO_VERSION    = "3.28.1"
 ANSIBLE_BASE_PATH = "ansible/playbooks/k8s"
 
 MASTERS = [

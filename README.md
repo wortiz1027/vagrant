@@ -139,6 +139,13 @@ y ejecutar el siguiente comando:
 scp -r vagrant@<k8s-master-node-ip-address>:/home/vagrant/.kube ~
 ```
 
+Permisos solo para el usuario anfitrion sobre ~/.kube/config
+
+```bash
+chmod o-r ~/.kube/config
+chmod g-r ~/.kube/config
+```
+
 los datos de autenticacion son:
 
 > **username**: vagrant
