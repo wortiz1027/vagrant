@@ -5,7 +5,7 @@
 
 #######################################################################
 #
-#	Update and Upgrade Ububtu Base
+#	Update and Upgrade Ubuntu Base
 #
 #######################################################################
 
@@ -14,7 +14,7 @@ sudo apt upgrade -y
 
 #######################################################################
 #
-#	Install Docker and NFS Server
+#	Install Docker
 #
 #######################################################################
 
@@ -43,20 +43,20 @@ sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyring
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 
 echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+	"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+	$(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+	sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-sudo apt-get update
+sudo apt-get update -y
 
-sudo apt-get install docker-compose-plugin
+sudo apt-get install docker-compose-plugin -y
 
 #######################################################################
 #
 #	Config NFS Client
 #
 #######################################################################
-
+echo "- - - 1 - - -"
 sudo apt install nfs-kernel-server -y
 
 sudo mkdir -p /mnt/nfs/docker_client
@@ -67,7 +67,7 @@ sudo mount 192.168.56.9:/mnt/nfs/share_dck_data	/mnt/nfs/docker_client
 #	Install And Config MkCert For Local CA Authority
 #
 #######################################################################
-
+echo "- - - 2 - - -"
 wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64
 sudo mv mkcert-v1.4.4-linux-amd64 /usr/bin/mkcert
 sudo chmod +x /usr/bin/mkcert
@@ -80,7 +80,7 @@ sudo -H -u vagrant echo $(mkcert -install)
 #	Use MkCert to Generate Certificates
 #
 #######################################################################
-
+echo "- - - 3 - - -"
 export APP_SHARED=/home/vagrant/shared
 mkdir -p $APP_SHARED/certs
 
@@ -96,6 +96,7 @@ sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey /vagra
 #	Downloading PostgreSQL Database Example
 #
 #######################################################################
+echo "- - - 4 - - -"
 mkdir -p $HOME/postgres-examples
 wget -o $HOME/postgres-examples/dvdrental.zip https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip
 wget -o $HOME/postgres-examples/demo-big-en.zip https://edu.postgrespro.com/demo-big-en.zip
@@ -105,7 +106,7 @@ wget -o $HOME/postgres-examples/demo-big-en.zip https://edu.postgrespro.com/demo
 #	Init Development Environment
 #
 #######################################################################
-    
+echo "- - - 5 - - -"
 sudo docker volume create pgdata-kc
 sudo docker volume create pgdata-lr
 sudo docker volume create mysqldata-st
@@ -127,7 +128,7 @@ sudo docker compose -f $APP_SHARED/docker-compose.yaml up -d
 #	Enable ports
 #
 #######################################################################
-
+echo "- - - 6 - - -"
 sudo ufw allow 80
 sudo ufw allow 443
 
@@ -237,3 +238,5 @@ sudo ufw allow 443
 #192.168.56.10 influxdb.developer.dck
 #192.168.56.10 ldap.developer.dck
 #192.168.56.10 jenkins.developer.dck
+
+#192.168.56.10 ollama.developer.dck
