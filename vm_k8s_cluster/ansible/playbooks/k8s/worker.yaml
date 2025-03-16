@@ -36,27 +36,31 @@
         - net-tools
         - nfs-common        
 
-    - name: Add cri-o apt key
-      apt_key: 
-        url: https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:{{ crio_version }}/{{ os_version }}/Release.key
-        state: present
-
-    - name: Add cri-o apt key
-      apt_key: 
-        url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os_version }}/Release.key
-        state: present
+    - name: Add cri-o repo
+      shell: echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os_version }}/ /"|sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+      #apt_repository:
+      #  repo: deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os_version }}/ /
+      #  state: present
+      #  filename: devel:kubic:libcontainers:stable.list
 
     - name: Add cri-o repo
-      apt_repository:
-        repo: deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os_version }}/ /
-        state: present
-        filename: devel:kubic:libcontainers:stable.list
+      shell: echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_version }}/{{ os_version }}/ /"|sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:{{ crio_version }}.list
+      #apt_repository:
+      #  repo: deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_version }}/{{ os_version }}/ /
+      #  state: present
+      #  filename: devel:kubic:libcontainers:stable:cri-o:{{ crio_version }}.list
 
-    - name: Add cri-o repo
-      apt_repository:
-        repo: deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_version }}/{{ os_version }}/ /
-        state: present
-        filename: devel:kubic:libcontainers:stable:cri-o:{{ crio_version }}.list
+    - name: Add cri-o apt key
+      shell: curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:{{ crio_version }}/{{ os_version }}/Release.key | sudo apt-key add -
+      #apt_key:
+      #  url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.28/xUbuntu_22.04/Release.key
+      #  state: present
+
+    - name: Add cri-o apt key
+      shell: curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os_version }}/Release.key | sudo apt-key add -
+      #apt_key: 
+      #  url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os_version }}/Release.key
+      #  state: present
 
     - name: Update apt
       apt:
