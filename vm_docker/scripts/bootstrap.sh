@@ -14,6 +14,23 @@ sudo apt upgrade -y
 
 #######################################################################
 #
+#	Adjust disk size for VirtualBox
+# 	https://blog.devops.dev/how-to-resize-your-root-partition-and-extends-lvm-size-on-ubuntu-20-04-2e0d5bd0411
+#	https://marcbrandner.com/blog/increasing-disk-space-of-a-linux-based-vagrant-box-on-provisioning/
+#	https://peateasea.de/resizing-the-disk-on-a-vagrant-virtual-machine/
+#	https://medium.com/@kanrangsan/how-to-automatically-resize-virtual-box-disk-with-vagrant-9f0f48aa46b3
+#	https://www.jeffgeerling.com/blogs/jeff-geerling/resizing-virtualbox-disk-image
+#
+#######################################################################
+
+sudo growpart /dev/sda 3
+sudo pvresize /dev/sda3
+sudo lvm lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+sudo resize2fs -p /dev/mapper/ubuntu--vg-ubuntu--lv
+lsblk
+
+#######################################################################
+#
 #	Install Docker
 #
 #######################################################################
@@ -155,6 +172,37 @@ sudo ufw allow 443
 
 # Static table lookup for hostnames.
 # See hosts(5) for details.
+
+#######################################################################
+#
+#	Config disk size for VirtualBox
+#
+#######################################################################
+
+# vboxmanage list hdds
+# vboxmanage closemedium disk 28073872-20c8-456f-be4d-d034cbb993e3 --delete
+# vboxmanage clonehd "ubuntu-24.04-amd64-disk001.vmdk" "ubuntu-24.04-amd64-disk001.vdi" --format VDI
+# vboxmanage modifyhd "ubuntu-24.04-amd64-disk001.vdi" --resize 160000
+
+#######################################################################
+#
+#	Resize mount point vm ubuntu
+#	https://superuser.com/questions/1810230/how-to-expand-ubuntu-server-root-storage
+#
+#######################################################################
+
+# sudo parted -s -a opt /dev/sda "resizepart 3 100%"
+# sudo pvresize /dev/sda3
+# sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+# sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
+
+#######################################################################
+#
+#	Run Ollama Models
+#
+#######################################################################
+
+# docker exec -it server_ollama ollama run qwen2.5-coder:7b
 
 #######################################################################
 #

@@ -1,22 +1,27 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-UBUNTU_BOX    = "bento/ubuntu-24.04"
-PROVIDER      = "virtualbox"
+UBUNTU_BOX      = "bento/ubuntu-24.04"
+PROVIDER        = "virtualbox"
 PROVISION_SHELL = "shell"
-VM_NAME       = "server-docker"
-VM_HOSTNAME   = "developer.io"
-VM_IP_ADDRESS = "192.168.56.10"
+VM_NAME         = "server-docker"
+VM_HOSTNAME     = "developer.io"
+VM_IP_ADDRESS   = "192.168.56.10"
+
+unless Vagrant.has_plugin?("vagrant-disksize")
+    raise  Vagrant::Errors::VagrantError.new, "vagrant-disksize plugin is missing. Please install it using 'vagrant plugin install vagrant-disksize' and rerun 'vagrant up'"
+end
 
 Vagrant.configure("2") do |config|
 	config.vm.box = UBUNTU_BOX
 	config.vm.hostname = VM_HOSTNAME
 	config.vm.network "private_network", ip: VM_IP_ADDRESS
 	config.vm.synced_folder "shared/", "/home/vagrant/shared"
+	config.disksize.size = '100GB'
 
 	config.vm.provider PROVIDER do |vb|
 		vb.name   = VM_NAME
-		vb.memory = 16144
+		vb.memory = 22144
 		vb.cpus   = 10
 	end
 

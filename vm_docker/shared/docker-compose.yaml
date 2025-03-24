@@ -788,51 +788,51 @@ services:
             - socket-proxy
         tty: true
 
-    ollama:
-        image: ollama/ollama:latest
-        container_name: server_ollama
-        restart: unless-stopped
-        security_opt:
-            - no-new-privileges:true
-        networks:
-            - ntw_development
-        environment:
-            - TZ=$TZ
-        ports:
-            - 11434:11434
-        volumes:
-            - ollama:/root/.ollama
-        depends_on:
-            - socket-proxy              
-        tty: true
-        healthcheck:
-            test: ollama --version || exit 1       
+#    ollama:
+#        image: ollama/ollama:latest
+#        container_name: server_ollama
+#        restart: unless-stopped
+#        security_opt:
+#            - no-new-privileges:true
+#        networks:
+#            - ntw_development
+#        environment:
+#            - TZ=$TZ
+#        ports:
+#            - 11434:11434
+#        volumes:
+#            - ollama:/root/.ollama
+#        depends_on:
+#            - socket-proxy              
+#        tty: true
+#        healthcheck:
+#            test: ollama --version || exit 1       
 
-    open-webui:
-        image: ghcr.io/open-webui/open-webui:main
-        container_name: server_open_webui
-        restart: unless-stopped
-        security_opt:
-            - no-new-privileges:true
-        networks:
-            - ntw_development
-        environment:
-            - TZ=$TZ
-            - 'OLLAMA_BASE_URL=http://ollama:11434'
-            - 'WEBUI_SECRET_KEY='
-        depends_on:
-            - socket-proxy 
-            - ollama
-        #ports:
-        #    - 3000:8080
-        volumes:
-            - open-webui:/app/backend/data            
-        extra_hosts:
-            - host.docker.internal:host-gateway
-        labels:
-            - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
-            - "traefik.http.routers.ollama.entrypoints=https"
-            - "traefik.http.routers.ollama.rule=Host(`ollama.${DOMAIN_DEVELOPMENT}`)"
-            - "traefik.http.routers.ollama.tls=true"
-            - "traefik.http.services.ollama.loadbalancer.server.port=8080"
+#    open-webui:
+#        image: ghcr.io/open-webui/open-webui:main
+#        container_name: server_open_webui
+#        restart: unless-stopped
+#        security_opt:
+#            - no-new-privileges:true
+#        networks:
+#            - ntw_development
+#        environment:
+#            - TZ=$TZ
+#            - 'OLLAMA_BASE_URL=http://ollama:11434'
+#            - 'WEBUI_SECRET_KEY='
+#        depends_on:
+#            - socket-proxy 
+#            - ollama
+#        #ports:
+#        #    - 3000:8080
+#        volumes:
+#            - open-webui:/app/backend/data            
+#        extra_hosts:
+#            - host.docker.internal:host-gateway
+#        labels:
+#            - "traefik.enable=true"
+#            - "traefik.docker.network=ntw_development"
+#            - "traefik.http.routers.ollama.entrypoints=https"
+#            - "traefik.http.routers.ollama.rule=Host(`ollama.${DOMAIN_DEVELOPMENT}`)"
+#            - "traefik.http.routers.ollama.tls=true"
+#            - "traefik.http.services.ollama.loadbalancer.server.port=8080"

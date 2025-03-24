@@ -12,13 +12,12 @@ CALICO_VERSION    = "3.29.2"
 ANSIBLE_BASE_PATH = "ansible/playbooks/k8s"
 
 MASTERS = [
-	{:hostname => 'k8s-master-', :box => UBUNTU_BOX, :memory => 3048, :cpus => 2}
+	{:hostname => 'server-k8s-master-', :box => UBUNTU_BOX, :memory => 3048, :cpus => 2}
 ]
 
 WORKERS = [
-	{:hostname => 'k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3},
-	{:hostname => 'k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3},
-	{:hostname => 'k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3}
+	{:hostname => 'server-k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3},
+	{:hostname => 'server-k8s-node-', :box => UBUNTU_BOX, :memory => 4096, :cpus => 3}
 ]
 
 Vagrant.configure("2") do |config|

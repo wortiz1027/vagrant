@@ -57,6 +57,7 @@
         - /mnt/nfs/share_dck_data/grafana-vlm
         - /mnt/nfs/share_dck_data/localstack-vlm
         - /mnt/nfs/share_dck_data/jenkins-vlm
+        - /mnt/nfs/share_dck_data/ollama-vlm        
 
     - name: Create a mountable directory for k8s labs if it does not exist
       file:
