@@ -135,6 +135,7 @@ sudo docker volume create grafana-storage
 sudo docker volume create ubuntu-storage
 sudo docker volume create oracle-data
 sudo docker volume create oracle-backup
+sudo docker volume create minio-storage
 
 sudo docker network create --driver bridge ntw_development
 
@@ -288,3 +289,6 @@ sudo ufw allow 443
 #192.168.56.10 jenkins.developer.dck
 
 #192.168.56.10 ollama.developer.dck
+#192.168.56.10 minio.developer.dck
+#192.168.56.10 minio-api.developer.dck
+#192.168.56.10 insight.developer.dck

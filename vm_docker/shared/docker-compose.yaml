@@ -32,6 +32,8 @@ volumes:
         external: true
     oracle-backup:
         external: true
+    minio-storage:
+        external: true
     ollama: {}
     open-webui: {}
 
@@ -137,6 +139,8 @@ services:
             - 50000:50000
             - 5540:5540
             - 3001:8080
+            - 9000:9000
+            - 9001:9001
         networks:
             - ntw_development
         environment:
@@ -546,7 +550,7 @@ services:
             - ntw_development
         environment:
             - TZ=$TZ
-            - KC_HOSTNAME=keycloak.${DOMAIN_DEVELOPMENT}
+            - KC_HOSTNAME=https://keycloak.${DOMAIN_DEVELOPMENT}
             - KC_PROXY_ADDRESS_FORWARDING=true
             - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
             - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
@@ -557,9 +561,14 @@ services:
             - KC_DB_URL=jdbc:postgresql://server_postgres_kc:${KC_DB_PORT}/${KC_DB_NAME}
             - KC_DB_USERNAME=${KC_DB_USERNAME}
             - KC_DB_PASSWORD=${KC_DB_PASSWORD}
-            - KC_PROXY=${KC_PROXY}
+            - KC_PROXY_HEADERS=${KC_PROXY_HEADERS}
             - KEYCLOAK_LOGLEVEL=DEBUG
             - ROOT_LOGLEVEL=DEBUG
+            - KC_METRICS_ENABLED=true
+            - KC_HEALTH_ENABLED=true
+            - KC_HOSTNAME_PORT=8080
+        depends_on:
+            - postgres-kc
         healthcheck:
             test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1
             interval: 10s
@@ -787,6 +796,34 @@ services:
         depends_on:
             - socket-proxy
         tty: true
+
+    minio:
+        image: quay.io/minio/minio:latest
+        container_name: server_minio
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_development
+        #ports:
+        #    - "9000:9000"  # For connecting to Minio API
+        #    - "9001:9001"  # For viewing Minio Web Console
+        volumes:
+            - minio-storage:/data
+        environment:
+            - TZ=$TZ
+            - MINIO_ROOT_USER=${MINIO_USERNAME}
+            - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+        command: server --console-address ":9001" /data
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_development"
+            - "traefik.http.routers.minio-api.rule=Host(`minio-api.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.minio-api.tls=true"
+            - "traefik.http.services.minio-api.loadbalancer.server.port=9000"
+            - "traefik.http.routers.minio-admin.rule=Host(`minio.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.minio-admin.tls=true"
+            - "traefik.http.services.minio-admin.loadbalancer.server.port=9001"
 
 #    ollama:
 #        image: ollama/ollama:latest
