@@ -2,19 +2,19 @@
 #
 # Secure Domains Traefik(Dynamic)
 # @Author : Wilman Ortiz
-# @Copyright (c) developer.io
+# @Copyright (c) servers.io
 #
 #######################################################################
 http:
   routers:
     traefik:
-      rule: "Host(`traefik.developer.dck`)"
+      rule: "Host(`traefik.servers.dck`)"
       service: "api@internal"
       tls:
         domains:
-          - main: "developer.dck"
+          - main: "servers.dck"
             sans:
-              - "*.developer.dck"
+              - "*.servers.dck"
 
 tls:
   certificates:

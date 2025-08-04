@@ -4,8 +4,8 @@
 UBUNTU_BOX      = "bento/ubuntu-24.04"
 PROVIDER        = "virtualbox"
 PROVISION_SHELL = "shell"
-VM_NAME         = "server-docker"
-VM_HOSTNAME     = "developer.io"
+VM_NAME         = "server-dck-srv"
+VM_HOSTNAME     = "servers.io"
 VM_IP_ADDRESS   = "192.168.56.10"
 
 unless Vagrant.has_plugin?("vagrant-disksize")

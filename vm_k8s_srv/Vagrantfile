@@ -26,7 +26,7 @@ Vagrant.configure("2") do |config|
 	MASTERS.to_enum.with_index(1).each do |machine, i|
 		config.vm.define "#{machine[:hostname]}#{i}" do |master|
 			master.vm.box = machine[:box]
-			master.vm.network "private_network", ip: "#{IP_BASE}#{i + 10}"
+			master.vm.network "private_network", ip: "#{IP_BASE}#{i + 11}"
 			master.vm.hostname = "#{machine[:hostname]}#{i}"
 			
 			master.vm.provider "virtualbox" do |vbx|
@@ -43,9 +43,9 @@ Vagrant.configure("2") do |config|
 						k8s_master_admin_user: "vagrant",
 						k8s_master_admin_group: "vagrant",
 						k8s_master_node_name: "#{machine[:hostname]}#{i}",
-						k8s_master_apiserver_advertise_address: "#{IP_BASE}#{i + 10}",
-						k8s_master_apiserver_cert_extra_sans: "#{IP_BASE}#{i + 10}",                    
-						k8s_master_node_ip: "#{IP_BASE}#{i + 10}",
+						k8s_master_apiserver_advertise_address: "#{IP_BASE}#{i + 11}",
+						k8s_master_apiserver_cert_extra_sans: "#{IP_BASE}#{i + 11}",                    
+						k8s_master_node_ip: "#{IP_BASE}#{i + 11}",
 						k8s_master_pod_network_cird: "192.168.0.0/16",
 						k8s_tools_version: K8S_TOOLS_VERSION,
 						os_version: OS_VERSION,

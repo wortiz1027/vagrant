@@ -1,4 +1,4 @@
-# LDIF Export for dc=developer,dc=dck
+# LDIF Export for dc=servers,dc=dck
 # Server: openldap (openldap)
 # Search Scope: sub
 # Search Filter: (objectClass=*)
@@ -9,38 +9,38 @@
 
 version: 1
 
-## Entry 1: dc=developer,dc=dck
-#dn: dc=developer,dc=dck
-#dc: developer
-#o: "developer Inc."
+## Entry 1: dc=servers,dc=dck
+#dn: dc=servers,dc=dck
+#dc: servers
+#o: "servers Inc."
 #objectclass: top
 #objectclass: dcObject
 #objectclass: organization
 
-## Entry 2: cn=admin,dc=developer,dc=dck
-#dn: cn=admin,dc=developer,dc=dck
+## Entry 2: cn=admin,dc=servers,dc=dck
+#dn: cn=admin,dc=servers,dc=dck
 #cn: admin
 #description: LDAP administrator
 #objectclass: simpleSecurityObject
 #objectclass: organizationalRole
 #userpassword: {SSHA}iGmwNRRDcGxmafPklI1kcKivNq8cCb4j
 
-# Entry 3: ou=groups,dc=developer,dc=dck
-dn: ou=groups,dc=developer,dc=dck
+# Entry 3: ou=groups,dc=servers,dc=dck
+dn: ou=groups,dc=servers,dc=dck
 objectclass: organizationalUnit
 objectclass: top
 ou: groups
 
-# Entry 4: cn=admins,ou=groups,dc=developer,dc=dck
-dn: cn=admins,ou=groups,dc=developer,dc=dck
+# Entry 4: cn=admins,ou=groups,dc=servers,dc=dck
+dn: cn=admins,ou=groups,dc=servers,dc=dck
 cn: admins
 gidnumber: 501
 memberuid: 1003
 objectclass: posixGroup
 objectclass: top
 
-# Entry 5: cn=Users,ou=groups,dc=developer,dc=dck
-dn: cn=Users,ou=groups,dc=developer,dc=dck
+# Entry 5: cn=Users,ou=groups,dc=servers,dc=dck
+dn: cn=Users,ou=groups,dc=servers,dc=dck
 cn: Users
 gidnumber: 500
 memberuid: 1000
@@ -49,14 +49,14 @@ memberuid: 1002
 objectclass: posixGroup
 objectclass: top
 
-# Entry 6: ou=Users,dc=developer,dc=dck
-dn: ou=Users,dc=developer,dc=dck
+# Entry 6: ou=Users,dc=servers,dc=dck
+dn: ou=Users,dc=servers,dc=dck
 objectclass: organizationalUnit
 objectclass: top
 ou: Users
 
-# Entry 7: cn=Ernesto Perez,ou=Users,dc=developer,dc=dck
-dn: cn=Ernesto Perez,ou=Users,dc=developer,dc=dck
+# Entry 7: cn=Ernesto Perez,ou=Users,dc=servers,dc=dck
+dn: cn=Ernesto Perez,ou=Users,dc=servers,dc=dck
 cn: Ernesto Perez
 gidnumber: 500
 givenname: Ernesto
@@ -69,8 +69,8 @@ uid: eperez
 uidnumber: 1000
 userpassword: {SSHA}9e5EKpxAHzZvy7DWCrRUTuwLWZsIHFAf
 
-# Entry 8: cn=Ivan Valderrama,ou=Users,dc=developer,dc=dck
-dn: cn=Ivan Valderrama,ou=Users,dc=developer,dc=dck
+# Entry 8: cn=Ivan Valderrama,ou=Users,dc=servers,dc=dck
+dn: cn=Ivan Valderrama,ou=Users,dc=servers,dc=dck
 cn: Ivan Valderrama
 gidnumber: 501
 givenname: Ivan
@@ -83,8 +83,8 @@ uid: ivalderrama
 uidnumber: 1003
 userpassword: {SSHA}9e5EKpxAHzZvy7DWCrRUTuwLWZsIHFAf
 
-# Entry 9: cn=Marcos Cubano,ou=Users,dc=developer,dc=dck
-dn: cn=Marcos Cubano,ou=Users,dc=developer,dc=dck
+# Entry 9: cn=Marcos Cubano,ou=Users,dc=servers,dc=dck
+dn: cn=Marcos Cubano,ou=Users,dc=servers,dc=dck
 cn: Marcos Cubano
 gidnumber: 500
 givenname: Marcos
@@ -97,8 +97,8 @@ uid: mcubano
 uidnumber: 1002
 userpassword: {SSHA}9e5EKpxAHzZvy7DWCrRUTuwLWZsIHFAf
 
-# Entry 10: cn=Camila Rodriguez,ou=Users,dc=developer,dc=dck
-dn: cn=Camila Rodriguez,ou=Users,dc=developer,dc=dck
+# Entry 10: cn=Camila Rodriguez,ou=Users,dc=servers,dc=dck
+dn: cn=Camila Rodriguez,ou=Users,dc=servers,dc=dck
 cn: Camila Rodriguez
 gidnumber: 500
 givenname: Camila

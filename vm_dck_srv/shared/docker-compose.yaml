@@ -1,5 +1,5 @@
 networks:
-    ntw_development:
+    ntw_servers:
         external: true
 
 volumes:
@@ -49,7 +49,7 @@ services:
         ports:
             - 2375:2375
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - LOG_LEVEL=info
@@ -92,7 +92,7 @@ services:
             - "--stop-timeout=5m"
             - "--cleanup"
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
         depends_on:
@@ -105,7 +105,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - DOZZLE_LEVEL=info
@@ -116,7 +116,7 @@ services:
             - socket-proxy
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.dozzle.rule=Host(`logs.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.dozzle.tls=true"
             - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
@@ -144,7 +144,7 @@ services:
             - 9000:9000
             - 9001:9001
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
         volumes:
@@ -166,7 +166,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
         volumes:
@@ -177,7 +177,7 @@ services:
             - socket-proxy
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.portainer.tls=true"
             - "traefik.http.services.portainer.loadbalancer.server.port=9000"
@@ -188,12 +188,12 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.whoami.tls=true"
 
@@ -204,7 +204,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - POSTGRES_DB=${KC_DB_NAME}
@@ -217,7 +217,7 @@ services:
             test: "exit 0"
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.tcp.routers.postgres-kc.entrypoints=postgres"
             - "traefik.tcp.routers.postgres-kc.rule=HostSNI(`keycloak.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
             - "traefik.tcp.routers.postgres-kc.tls=true"
@@ -231,7 +231,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - POSTGRES_DB=${LEARNING_DATABASE_NAME}
@@ -244,7 +244,7 @@ services:
             test: "exit 0"
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.tcp.routers.postgres-lr.entrypoints=postgres"
             - "traefik.tcp.routers.postgres-lr.rule=HostSNI(`learning.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
             - "traefik.tcp.routers.postgres-lr.tls=true"
@@ -258,7 +258,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - POSTGRES_DB=${AUTHENTIK_DATABASE_NAME}
@@ -275,7 +275,7 @@ services:
             timeout: 5s
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.tcp.routers.postgres-ak.entrypoints=postgres"
             - "traefik.tcp.routers.postgres-ak.rule=HostSNI(`authentik.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
             - "traefik.tcp.routers.postgres-ak.tls=true"
@@ -291,7 +291,7 @@ services:
         ports:
             - 3306:3306
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - MYSQL_DATABASE=${STUDY_DATABASE_NAME}
@@ -315,7 +315,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         ports:
             - 1521:1521
         environment:
@@ -331,7 +331,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         ports:
             - 27017:27017
         environment:
@@ -351,7 +351,7 @@ services:
 #        ports:
 #            - 7000:7000
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        hostname: redis-node-1
 #        volumes:
 #            - ./redis/redis-7000.conf:/redis/redis-7000.conf
@@ -368,7 +368,7 @@ services:
 #        ports:
 #            - 7001:7001
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        hostname: redis-node-2
 #        volumes:
 #            - ./redis/redis-7001.conf:/redis/redis-7001.conf
@@ -385,7 +385,7 @@ services:
 #        ports:
 #            - 7002:7002
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        hostname: redis-node-3
 #        volumes:
 #            - ./redis/redis-7002.conf:/redis/redis-7002.conf
@@ -402,7 +402,7 @@ services:
 #        ports:
 #            - 7003:7003
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        hostname: redis-node-4
 #        volumes:
 #            - ./redis/redis-7003.conf:/redis/redis-7003.conf
@@ -419,7 +419,7 @@ services:
 #        ports:
 #            - 7004:7004
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        hostname: redis-node-5
 #        volumes:
 #            - ./redis/redis-7004.conf:/redis/redis-7004.conf
@@ -436,7 +436,7 @@ services:
 #        ports:
 #            - 7005:7005
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        hostname: redis-node-6
 #        volumes:
 #            - ./redis/redis-7005.conf:/redis/redis-7005.conf
@@ -451,7 +451,7 @@ services:
 #        security_opt:
 #            - no-new-privileges:true
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        command: --save 60 1 --loglevel warning
 #        healthcheck:
 #            test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
@@ -468,7 +468,7 @@ services:
 #        ports:
 #            - 6999:6999
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        command: redis-cli -h server_redis_node_1 -p 7000 -a "${REDIS_HOST_PASSWORD}" --cluster create redis-node-1:7000 redis-node-2:7001 redis-node-3:7002 #redis-node-4:7003 redis-node-5:7004 redis-node-6:7005 --cluster-replicas 1 --cluster-yes
 #        env_file:
 #            - .env
@@ -487,7 +487,7 @@ services:
 #        security_opt:
 #            - no-new-privileges:true
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        environment:
 #            - TZ=$TZ
 #        volumes:
@@ -496,7 +496,7 @@ services:
 #            - redis-cluster-creator
 #        labels:
 #            - "traefik.enable=true"
-#            - "traefik.docker.network=ntw_development"
+#            - "traefik.docker.network=ntw_servers"
 #            - "traefik.http.routers.redis-insight.rule=Host(`insight.${DOMAIN_DEVELOPMENT}`)"
 #            - "traefik.http.routers.redis-insight.tls=true"
 #            - "traefik.http.services.redis-insight.loadbalancer.server.port=5540"
@@ -508,7 +508,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
@@ -518,7 +518,7 @@ services:
             - pgadmin:/var/lib/pgadmin
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.pgadmin.tls=true"
 
@@ -529,7 +529,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER}
@@ -539,7 +539,7 @@ services:
             - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_DATABASE_USERNAME}:${MONGO_DATABASE_PASSWORD}@mongo:27017/
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.mongo-express.rule=Host(`me.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.mongo-express.tls=true"
             - "traefik.http.services.mongo-express.loadbalancer.server.port=8081"
@@ -553,7 +553,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         ports:
             - "8082:8080"
             - "8181:8181"
@@ -573,7 +573,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
@@ -585,7 +585,7 @@ services:
         labels:
             - "NAME=rabbitmq"
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.rabbit.rule=Host(`rabbit.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.rabbit.tls=true"
             - "traefik.http.services.rabbit.loadbalancer.server.port=15672"
@@ -598,7 +598,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - KC_HOSTNAME=https://keycloak.${DOMAIN_DEVELOPMENT}
@@ -628,7 +628,7 @@ services:
             start_period: 90s
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.keycloak.entrypoints=https"
             - "traefik.http.routers.keycloak.rule=Host(`keycloak.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.keycloak.tls=true"
@@ -641,7 +641,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - LDAP_ORGANISATION="Developer Inc."
@@ -664,7 +664,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - PHPLDAPADMIN_LDAP_HOSTS=server_ldap
@@ -673,7 +673,7 @@ services:
             - openldap
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.ldapadmin.rule=Host(`ldap.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.ldapadmin.tls=true"
             - "traefik.http.services.ldapadmin.loadbalancer.server.port=80"
@@ -685,7 +685,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - METRICS_STORAGE_TYPE=prometheus
@@ -700,7 +700,7 @@ services:
         command: --query.ui-config /etc/jaeger/jaeger-ui.json
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.jaeger.rule=Host(`jaeger.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.jaeger.tls=true"
             - "traefik.http.services.jaeger.loadbalancer.server.port=16686"
@@ -712,7 +712,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
         volumes:
@@ -728,14 +728,14 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
         volumes:
             - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.prometheus.tls=true"
             - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
@@ -747,7 +747,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         ports:
             - "8086:8086"
         volumes:
@@ -768,7 +768,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
             - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
@@ -783,7 +783,7 @@ services:
             - influxdb
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.grafana.tls=true"
             - "traefik.http.services.grafana.loadbalancer.server.port=3000"
@@ -795,7 +795,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         ports:
             - "127.0.0.1:4566:4566"
             - "127.0.0.1:4510-4559:4510-4559"
@@ -814,7 +814,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
         privileged: true
@@ -825,7 +825,7 @@ services:
             - socket-proxy
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
             - "traefik.http.routers.jenkins.rule=Host(`jenkins.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.jenkins.tls=true"
             - "traefik.http.services.jenkins.loadbalancer.server.port=8080"
@@ -837,7 +837,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         environment:
             - TZ=$TZ
         privileged: true
@@ -855,7 +855,7 @@ services:
         security_opt:
             - no-new-privileges:true
         networks:
-            - ntw_development
+            - ntw_servers
         volumes:
             - minio-storage:/data
         environment:
@@ -865,7 +865,7 @@ services:
         command: server --console-address ":9001" /data
         labels:
             - "traefik.enable=true"
-            - "traefik.docker.network=ntw_development"
+            - "traefik.docker.network=ntw_servers"
 
             - "traefik.http.routers.minio-api.rule=Host(`minio-api.${DOMAIN_DEVELOPMENT}`)"
             - "traefik.http.routers.minio-api.tls=true"
@@ -884,7 +884,7 @@ services:
 #        security_opt:
 #            - no-new-privileges:true
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        environment:
 #            - TZ=$TZ
 #        ports:
@@ -904,7 +904,7 @@ services:
 #        security_opt:
 #            - no-new-privileges:true
 #        networks:
-#            - ntw_development
+#            - ntw_servers
 #        environment:
 #            - TZ=$TZ
 #            - 'OLLAMA_BASE_URL=http://ollama:11434'
@@ -920,7 +920,7 @@ services:
 #            - host.docker.internal:host-gateway
 #        labels:
 #            - "traefik.enable=true"
-#            - "traefik.docker.network=ntw_development"
+#            - "traefik.docker.network=ntw_servers"
 #            - "traefik.http.routers.ollama.entrypoints=https"
 #            - "traefik.http.routers.ollama.rule=Host(`ollama.${DOMAIN_DEVELOPMENT}`)"
 #            - "traefik.http.routers.ollama.tls=true"

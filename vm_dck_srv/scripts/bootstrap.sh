@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 # Author : Wilman Ortiz
-# Copyright (c) developer.io
+# Copyright (c) servers.io
 
 #######################################################################
 #
@@ -103,7 +103,7 @@ mkdir -p $APP_SHARED/certs
 
 sudo -H -u vagrant mkcert -cert-file $APP_SHARED/certs/traefik.crt \
 	-key-file $APP_SHARED/certs/traefik.key \
-	"developer.dck" "*.developer.dck"
+	"servers.dck" "*.servers.dck"
 
 sudo openssl pkcs12 -export -out /vagrant/shared/certs/traefik.p12 -inkey /vagrant/shared/certs/traefik.key -in \
 /vagrant/shared/certs/traefik.crt -passin pass:changeit -passout pass:changeit
@@ -139,7 +139,7 @@ sudo docker volume create oracle-backup
 sudo docker volume create minio-storage
 sudo docker volume create redis-ak
 
-sudo docker network create --driver bridge ntw_development
+sudo docker network create --driver bridge ntw_servers
 
 sudo docker compose -f $APP_SHARED/docker-compose.yaml up -d
 
@@ -164,13 +164,20 @@ sudo ufw allow 443
 # sudo systemctl stop docker
 # sudo systemctl stop docker.socket
 # enable remote docker daemon execution => sudo dockerd -H unix:///var/run/docker.sock -H tcp://192.168.56.10
-# https://docker-docs.uclv.cu/engine/install/binaries/
+#										   sudo dockerd -H unix:///var/run/docker.sock -H tcp://192.168.56.11
+# Tutorial: Remote Docker https://www.youtube.com/watch?v=Z4T1UUEqiSw
+# Documentación: https://docs.docker.com/engine/install/binaries/
+# Documentation Context: https://docs.docker.com/engine/manage-resources/contexts/
+# docker context create dck-srv --docker host=tcp://servers.io:2375 --description "Docker context to manage all informations and status about applications/databases/logs/networks services"
+
+# docker context create dck-dev --docker host=tcp://developer.io:2375 --description "Docker context to manage all informations and status about development applications"
+
 # docker stop $(docker ps -a -q)
 # docker rm $(docker ps -a -q)
 # docker volume rm $(docker volume ls -q)
 
-# https://ldap.developer.dck/
-# login DN: cn=admin,dc=developer,dc=dck
+# https://ldap.servers.dck/
+# login DN: cn=admin,dc=severs,dc=dck
 # password: Ldap2024..
 
 # Static table lookup for hostnames.
@@ -263,34 +270,42 @@ sudo ufw allow 443
 #127.0.0.1   localhost localhost.localdomain
 #::1         localhost localhost.localdomain
 #
-## K8S Cluster
-#192.168.56.11 k8s-master-1
-#192.168.56.12 k8s-node-1
-#192.168.56.13 k8s-node-2
-#192.168.56.14 k8s-node-3
-#
-## Docker Services
-#192.168.56.10 traefik.developer.dck
-#192.168.56.10 logs.developer.dck
-#192.168.56.10 portainer.developer.dck
-#192.168.56.10 whoami.developer.dck
-#192.168.56.10 redis.developer.dck
-#192.168.56.10 pgadmin.developer.dck
-#192.168.56.10 me.developer.dck
-#192.168.56.10 keycloak.developer.dck
-#192.168.56.10 jaeger.developer.dck
-#192.168.56.10 prometheus.developer.dck
-#192.168.56.10 rabbit.developer.dck
-#
-#192.168.56.10 keycloak.postgres.developer.dck
-#192.168.56.10 learning.postgres.developer.dck
-#
-#192.168.56.10 grafana.developer.dck
-#192.168.56.10 influxdb.developer.dck
-#192.168.56.10 ldap.developer.dck
-#192.168.56.10 jenkins.developer.dck
+# Static table lookup for hostnames.
+# See hosts(5) for details.
+#127.0.0.1        localhost
+#::1              localhost
 
-#192.168.56.10 ollama.developer.dck
-#192.168.56.10 minio.developer.dck
-#192.168.56.10 minio-api.developer.dck
-#192.168.56.10 insight.developer.dck
+## Docker Servers
+#192.168.56.10 servers.io
+#192.168.56.11 developer.io
+
+## K8S Servers
+#192.168.56.12 k8s-master-1
+#192.168.56.13 k8s-node-1
+#192.168.56.14 k8s-node-2
+
+## Applications Servers
+#192.168.56.10 traefik.servers.dck
+#192.168.56.10 logs.servers.dck
+#192.168.56.10 portainer.servers.dck
+#192.168.56.10 whoami.servers.dck
+#192.168.56.10 redis.servers.dck
+#192.168.56.10 pgadmin.servers.dck
+#192.168.56.10 me.servers.dck
+#192.168.56.10 keycloak.servers.dck
+#192.168.56.10 jaeger.servers.dck
+#192.168.56.10 prometheus.servers.dck
+#192.168.56.10 rabbit.servers.dck
+
+#192.168.56.10 keycloak.postgres.servers.dck
+#192.168.56.10 learning.postgres.servers.dck
+
+#192.168.56.10 grafana.servers.dck
+#192.168.56.10 influxdb.servers.dck
+#192.168.56.10 ldap.servers.dck
+#192.168.56.10 jenkins.servers.dck
+
+#192.168.56.10 ollama.servers.dck
+#192.168.56.10 minio.servers.dck
+#192.168.56.10 minio-api.servers.dck
+#192.168.56.10 insight.servers.dck
