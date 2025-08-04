@@ -126,6 +126,7 @@ wget -o $HOME/postgres-examples/demo-big-en.zip https://edu.postgrespro.com/demo
 echo "- - - 5 - - -"
 sudo docker volume create pgdata-kc
 sudo docker volume create pgdata-lr
+sudo docker volume create pgdata-ak
 sudo docker volume create mysqldata-st
 sudo docker volume create mongo-st
 sudo docker volume create pgadmin
@@ -136,6 +137,7 @@ sudo docker volume create ubuntu-storage
 sudo docker volume create oracle-data
 sudo docker volume create oracle-backup
 sudo docker volume create minio-storage
+sudo docker volume create redis-ak
 
 sudo docker network create --driver bridge ntw_development
 

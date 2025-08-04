@@ -4,15 +4,15 @@
 UBUNTU_BOX        = "bento/ubuntu-24.04"
 IP_BASE           = "192.168.56."
 K8S_NAME          = "dev-k8s"
-K8S_KEY_VERSION   = "1.32"
-K8S_TOOLS_VERSION = "1.32.*"
+K8S_KEY_VERSION   = "1.33"
+K8S_TOOLS_VERSION = "1.33.*"
 OS_VERSION        = "xUbuntu_22.04"
 CRIO_VERSION      = "1.28"
 CALICO_VERSION    = "3.29.2"
 ANSIBLE_BASE_PATH = "ansible/playbooks/k8s"
 
 MASTERS = [
-	{:hostname => 'server-k8s-master-', :box => UBUNTU_BOX, :memory => 3048, :cpus => 2}
+	{:hostname => 'server-k8s-master-', :box => UBUNTU_BOX, :memory => 2048, :cpus => 2}
 ]
 
 WORKERS = [
