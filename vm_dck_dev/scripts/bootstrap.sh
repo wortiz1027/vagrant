@@ -39,11 +39,35 @@ sudo apt install docker.io -y
 
 #######################################################################
 #
+#	Config Docker Daemon and expose port: 2375
+#
+#######################################################################
+
+sudo mkdir -p /etc/systemd/system/docker.service.d
+
+sudo sh -c "cat >>/etc/docker/daemon.json" <<-EOF
+{
+	"hosts": [
+		"unix:///var/run/docker.sock",
+		"tcp://0.0.0.0:2375"
+	]
+}
+EOF
+
+sudo sh -c "cat >>/etc/systemd/system/docker.service.d/override.conf" <<-EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd --config-file /etc/docker/daemon.json
+EOF
+
+#######################################################################
+#
 #	Start/Enable Docker
 #
 #######################################################################
 
-sudo systemctl start docker
+sudo systemctl daemon-reload
+sudo systemctl restart docker
 sudo systemctl enable docker
 
 sudo usermod -aG docker "$USER"
@@ -73,8 +97,7 @@ sudo apt-get install docker-compose-plugin -y
 #	Config NFS Client
 #
 #######################################################################
-echo "- - - 1 - - -"
-sudo apt install nfs-kernel-server -y
+sudo apt install nfs-kernel-server net-tools -y
 
 sudo mkdir -p /mnt/nfs/docker_client
 sudo mount 192.168.56.9:/mnt/nfs/share_dck_data	/mnt/nfs/docker_client
@@ -84,7 +107,6 @@ sudo mount 192.168.56.9:/mnt/nfs/share_dck_data	/mnt/nfs/docker_client
 #	Install And Config MkCert For Local CA Authority
 #
 #######################################################################
-echo "- - - 2 - - -"
 wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64
 sudo mv mkcert-v1.4.4-linux-amd64 /usr/bin/mkcert
 sudo chmod +x /usr/bin/mkcert
@@ -97,7 +119,6 @@ sudo -H -u vagrant echo $(mkcert -install)
 #	Use MkCert to Generate Certificates
 #
 #######################################################################
-echo "- - - 3 - - -"
 export APP_SHARED=/home/vagrant/shared
 mkdir -p $APP_SHARED/certs
 
@@ -115,10 +136,8 @@ sudo docker network create --driver bridge ntw_development
 #	Enable ports
 #
 #######################################################################
-sudo ufw enable
 sudo ufw allow 80
 sudo ufw allow 443
-sudo ufw allow 2375
 
 #######################################################################
 #
