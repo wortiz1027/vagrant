@@ -31,6 +31,22 @@ lsblk
 
 #######################################################################
 #
+#	Add docker remote environment for portainer
+#
+#######################################################################
+HOSTS_FILE="/etc/hosts"
+
+sudo sh -c "cat >>$HOSTS_FILE" <<-EOF
+
+## Storage Servers
+192.168.56.9 storage.io 
+
+## Docker Servers
+192.168.56.10 servers.io
+EOF
+
+#######################################################################
+#
 #	Install Docker
 #
 #######################################################################
@@ -42,10 +58,13 @@ sudo apt install docker.io -y
 #	Config Docker Daemon and expose port: 2375
 #
 #######################################################################
+DOCKER_SERVICE_OVERRIDE_FILE_PATH=/etc/systemd/system/docker.service.d
+DOCKER_DAEMON_FILE=/etc/docker/daemon.json
+DOCKER_SERVICE_OVERRIDE_FILE=$DOCKER_SERVICE_OVERRIDE_FILE_PATH/override.conf	
 
-sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo mkdir -p $DOCKER_SERVICE_OVERRIDE_FILE_PATH/
 
-sudo sh -c "cat >>/etc/docker/daemon.json" <<-EOF
+sudo sh -c "cat >>$DOCKER_DAEMON_FILE" <<-EOF
 {
 	"hosts": [
 		"unix:///var/run/docker.sock",
@@ -54,7 +73,7 @@ sudo sh -c "cat >>/etc/docker/daemon.json" <<-EOF
 }
 EOF
 
-sudo sh -c "cat >>/etc/systemd/system/docker.service.d/override.conf" <<-EOF
+sudo sh -c "cat >>$DOCKER_SERVICE_OVERRIDE_FILE" <<-EOF
 [Service]
 ExecStart=
 ExecStart=/usr/bin/dockerd --config-file /etc/docker/daemon.json

@@ -31,6 +31,27 @@ lsblk
 
 #######################################################################
 #
+#	Add docker remote environment for portainer
+#
+#######################################################################
+HOSTS_FILE="/etc/hosts"
+
+sudo sh -c "cat >>$HOSTS_FILE" <<-EOF
+
+## Storage Servers
+192.168.56.9 storage.io 
+
+## Docker Servers
+192.168.56.11 developer.io
+
+## K8S Servers
+192.168.56.12 k8s-master-1
+192.168.56.13 k8s-node-1
+192.168.56.14 k8s-node-2
+EOF
+
+#######################################################################
+#
 #	Install Docker
 #
 #######################################################################
@@ -76,7 +97,7 @@ sudo apt-get install docker-compose-plugin -y
 sudo apt install nfs-kernel-server net-tools -y
 
 sudo mkdir -p /mnt/nfs/docker_client
-sudo mount 192.168.56.9:/mnt/nfs/share_dck_data	/mnt/nfs/docker_client
+sudo mount storage.io:/mnt/nfs/share_dck_data /mnt/nfs/docker_client
 
 #######################################################################
 #
@@ -270,6 +291,9 @@ sudo ufw allow 443
 # See hosts(5) for details.
 #127.0.0.1        localhost
 #::1              localhost
+
+## Storage Servers
+#192.168.56.9 storage.io 
 
 ## Docker Servers
 #192.168.56.10 servers.io

@@ -4,7 +4,7 @@
 UBUNTU_BOX    = "bento/ubuntu-24.04"
 PROVIDER      = "virtualbox"
 VM_NAME       = "server-nfs"
-VM_HOSTNAME   = "nfs.servers.dck"
+VM_HOSTNAME   = "nfs.storage.srv"
 VM_IP_ADDRESS = "192.168.56.9"
 
 Vagrant.configure("2") do |config|

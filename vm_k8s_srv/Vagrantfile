@@ -59,7 +59,7 @@ Vagrant.configure("2") do |config|
 	WORKERS.to_enum.with_index(1).each do |node, j|
 		config.vm.define "#{node[:hostname]}#{j}" do |worker|
 			worker.vm.box = node[:box]
-			worker.vm.network "private_network", ip: "#{IP_BASE}#{j + 10 + MASTERS.length()}"
+			worker.vm.network "private_network", ip: "#{IP_BASE}#{j + 11 + MASTERS.length()}"
 			worker.vm.hostname = "#{node[:hostname]}#{j}"
 
 			worker.vm.provider "virtualbox" do |vbx|
@@ -76,7 +76,7 @@ Vagrant.configure("2") do |config|
 						k8s_node_admin_user:  "vagrant",
 						k8s_node_admin_group: "vagrant",
 						k8s_node_name: "#{node[:hostname]}#{j}",
-						k8s_node_ip: "#{IP_BASE}#{j + 10 + MASTERS.length()}",
+						k8s_node_ip: "#{IP_BASE}#{j + 11 + MASTERS.length()}",
 						k8s_tools_version: K8S_TOOLS_VERSION,
 						os_version: OS_VERSION,
 						crio_version: CRIO_VERSION
