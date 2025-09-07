@@ -16,6 +16,8 @@ volumes:
         external: true
     pgdata-ak:
         external: true
+    pgdata-sq:
+        external: true        
     mysqldata-st:
         external: true
     mongo-st:
@@ -35,6 +37,14 @@ volumes:
     oracle-backup:
         external: true
     minio-storage:
+        external: true
+    sonarqube_data:
+        external: true
+    sonarqube_extensions:
+        external: true
+    sonarqube_logs:
+        external: true
+    nexus_data:
         external: true
     ollama: {}
     open-webui: {}
@@ -143,6 +153,7 @@ services:
             - 3001:8080
             - 9000:9000
             - 9001:9001
+            - 8081:8081
         networks:
             - ntw_servers
         environment:
@@ -282,6 +293,37 @@ services:
             - "traefik.tcp.routers.postgres-ak.tls.passthrough=false"
             - "traefik.tcp.services.postgres-ak.loadbalancer.server.port=5432"
 
+    postgres-sq:
+        image: postgres:latest
+        container_name: server_postgres_sq
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_servers
+        environment:
+            - TZ=$TZ
+            - POSTGRES_DB=${SONARQUBE_DATABASE_NAME}
+            - POSTGRES_USER=${SONARQUBE_DATABASE_USERNAME}
+            - POSTGRES_PASSWORD=${SONARQUBE_DATABASE_PASSWORD}
+            - PGDATA=/var/lib/postgresql/data
+        volumes:
+            - pgdata-sq:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+            start_period: 20s
+            interval: 30s
+            retries: 5
+            timeout: 5s
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_servers"
+            - "traefik.tcp.routers.postgres-sq.entrypoints=postgres"
+            - "traefik.tcp.routers.postgres-sq.rule=HostSNI(`sonarqube.${DOMAIN_DEVELOPMENT_POSTGRES}`)"
+            - "traefik.tcp.routers.postgres-sq.tls=true"
+            - "traefik.tcp.routers.postgres-sq.tls.passthrough=false"
+            - "traefik.tcp.services.postgres-sq.loadbalancer.server.port=5432"
+
     mysql-st:
         image: mysql:9.2.0
         container_name: server_mysql_st
@@ -342,164 +384,160 @@ services:
         volumes:
             - mongo-st:/data/db
 
-#    redis-node-1:
-#        image: redis:latest
-#        container_name: server_redis_node_1
-#        restart: unless-stopped
-#        security_opt:
-#            - no-new-privileges:true
-#        ports:
-#            - 7000:7000
-#        networks:
-#            - ntw_servers
-#        hostname: redis-node-1
-#        volumes:
-#            - ./redis/redis-7000.conf:/redis/redis-7000.conf
-#        command: /bin/sh -c "redis-server /redis/redis-7000.conf --requirepass $$REDIS_HOST_PASSWORD"
-#        env_file:
-#            - .env
+    redis-node-1:
+        image: redis:latest
+        container_name: server_redis_node_1
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7000:7000
+        networks:
+            - ntw_servers
+        hostname: redis-node-1
+        volumes:
+            - ./redis/redis-7000.conf:/redis/redis-7000.conf
+        command: /bin/sh -c "redis-server /redis/redis-7000.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
 
-#    redis-node-2:
-#        image: redis:latest
-#        container_name: server_redis_node_2
-#        restart: unless-stopped
-#        security_opt:
-#            - no-new-privileges:true
-#        ports:
-#            - 7001:7001
-#        networks:
-#            - ntw_servers
-#        hostname: redis-node-2
-#        volumes:
-#            - ./redis/redis-7001.conf:/redis/redis-7001.conf
-#        command: /bin/sh -c "redis-server /redis/redis-7001.conf --requirepass $$REDIS_HOST_PASSWORD"
-#        env_file:
-#            - .env
+    redis-node-2:
+        image: redis:latest
+        container_name: server_redis_node_2
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7001:7001
+        networks:
+            - ntw_servers
+        hostname: redis-node-2
+        volumes:
+            - ./redis/redis-7001.conf:/redis/redis-7001.conf
+        command: /bin/sh -c "redis-server /redis/redis-7001.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
+    redis-node-3:
+        image: redis:latest
+        container_name: server_redis_node_3
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7002:7002
+        networks:
+            - ntw_servers
+        hostname: redis-node-3
+        volumes:
+            - ./redis/redis-7002.conf:/redis/redis-7002.conf
+        command: /bin/sh -c "redis-server /redis/redis-7002.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
+    redis-node-4:
+        image: redis:latest
+        container_name: server_redis_node_4
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7003:7003
+        networks:
+            - ntw_servers
+        hostname: redis-node-4
+        volumes:
+            - ./redis/redis-7003.conf:/redis/redis-7003.conf
+        command: /bin/sh -c "redis-server /redis/redis-7003.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
+    redis-node-5:
+        image: redis:latest
+        container_name: server_redis_node_5
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7004:7004
+        networks:
+            - ntw_servers
+        hostname: redis-node-5
+        volumes:
+            - ./redis/redis-7004.conf:/redis/redis-7004.conf
+        command: /bin/sh -c "redis-server /redis/redis-7004.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
+    redis-node-6:
+        image: redis:latest
+        container_name: server_redis_node_6
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7005:7005
+        networks:
+            - ntw_servers
+        hostname: redis-node-6
+        volumes:
+            - ./redis/redis-7005.conf:/redis/redis-7005.conf
+        command: /bin/sh -c "redis-server /redis/redis-7005.conf --requirepass $$REDIS_HOST_PASSWORD"
+        env_file:
+            - .env
 
-#    redis-node-3:
-#        image: redis:latest
-#        container_name: server_redis_node_3
-#        restart: unless-stopped
-#        security_opt:
-#            - no-new-privileges:true
-#        ports:
-#            - 7002:7002
-#        networks:
-#            - ntw_servers
-#        hostname: redis-node-3
-#        volumes:
-#            - ./redis/redis-7002.conf:/redis/redis-7002.conf
-#        command: /bin/sh -c "redis-server /redis/redis-7002.conf --requirepass $$REDIS_HOST_PASSWORD"
-#        env_file:
-#            - .env
+    redis-ak:
+        image: docker.io/library/redis:alpine
+        container_name: server_redis_authentik
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_servers
+        command: --save 60 1 --loglevel warning
+        healthcheck:
+            test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+            start_period: 20s
+            interval: 30s
+            retries: 5
+            timeout: 3s
+        volumes:
+        - redis_data:/data
 
-#    redis-node-4:
-#        image: redis:latest
-#        container_name: server_redis_node_4
-#        restart: unless-stopped
-#        security_opt:
-#            - no-new-privileges:true
-#        ports:
-#            - 7003:7003
-#        networks:
-#            - ntw_servers
-#        hostname: redis-node-4
-#        volumes:
-#            - ./redis/redis-7003.conf:/redis/redis-7003.conf
-#        command: /bin/sh -c "redis-server /redis/redis-7003.conf --requirepass $$REDIS_HOST_PASSWORD"
-#        env_file:
-#            - .env
+    redis-cluster-creator:
+        image: redis:latest
+        container_name: server_redis_creator
+        ports:
+            - 6999:6999
+        networks:
+            - ntw_servers
+        command: redis-cli -h server_redis_node_1 -p 7000 -a "${REDIS_HOST_PASSWORD}" --cluster create redis-node-1:7000 redis-node-2:7001 redis-node-3:7002 redis-node-4:7003 redis-node-5:7004 redis-node-6:7005 --cluster-replicas 1 --cluster-yes
+        env_file:
+            - .env
+        depends_on:
+            - redis-node-1
+            - redis-node-2
+            - redis-node-3
+            - redis-node-4
+            - redis-node-5
+            - redis-node-6
 
-#    redis-node-5:
-#        image: redis:latest
-#        container_name: server_redis_node_5
-#        restart: unless-stopped
-#        security_opt:
-#            - no-new-privileges:true
-#        ports:
-#            - 7004:7004
-#        networks:
-#            - ntw_servers
-#        hostname: redis-node-5
-#        volumes:
-#            - ./redis/redis-7004.conf:/redis/redis-7004.conf
-#        command: /bin/sh -c "redis-server /redis/redis-7004.conf --requirepass $$REDIS_HOST_PASSWORD"
-#        env_file:
-#            - .env
-
-#   redis-node-6:
-#        image: redis:latest
-#        container_name: server_redis_node_6
-#        restart: unless-stopped
-#        security_opt:
-#            - no-new-privileges:true
-#        ports:
-#            - 7005:7005
-#        networks:
-#            - ntw_servers
-#        hostname: redis-node-6
-#        volumes:
-#            - ./redis/redis-7005.conf:/redis/redis-7005.conf
-#        command: /bin/sh -c "redis-server /redis/redis-7005.conf --requirepass $$REDIS_HOST_PASSWORD"
-#        env_file:
-#            - .env
-
-#    redis-ak:
-#        image: docker.io/library/redis:alpine
-#        container_name: server_redis_authentik
-#        restart: unless-stopped
-#        security_opt:
-#            - no-new-privileges:true
-#        networks:
-#            - ntw_servers
-#        command: --save 60 1 --loglevel warning
-#        healthcheck:
-#            test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
-#            start_period: 20s
-#            interval: 30s
-#            retries: 5
-#            timeout: 3s
-#        volumes:
-#        - redis_data:/data
-
-#    redis-cluster-creator:
-#        image: redis:latest
-#        container_name: server_redis_creator
-#        ports:
-#            - 6999:6999
-#        networks:
-#            - ntw_servers
-#        command: redis-cli -h server_redis_node_1 -p 7000 -a "${REDIS_HOST_PASSWORD}" --cluster create redis-node-1:7000 redis-node-2:7001 redis-node-3:7002 #redis-node-4:7003 redis-node-5:7004 redis-node-6:7005 --cluster-replicas 1 --cluster-yes
-#        env_file:
-#            - .env
-#        depends_on:
-#            - redis-node-1
-#            - redis-node-2
-#            - redis-node-3
-#            - redis-node-4
-#            - redis-node-5
-#            - redis-node-6
-
-#    redis-insight:
-#        image: redislabs/redisinsight:latest
-#        container_name: server_redis_insight
-#        restart: always
-#        security_opt:
-#            - no-new-privileges:true
-#        networks:
-#            - ntw_servers
-#        environment:
-#            - TZ=$TZ
-#        volumes:
-#            - ./redis-insight:/db
-#        depends_on:
-#            - redis-cluster-creator
-#        labels:
-#            - "traefik.enable=true"
-#            - "traefik.docker.network=ntw_servers"
-#            - "traefik.http.routers.redis-insight.rule=Host(`insight.${DOMAIN_DEVELOPMENT}`)"
-#            - "traefik.http.routers.redis-insight.tls=true"
-#            - "traefik.http.services.redis-insight.loadbalancer.server.port=5540"
+    redis-insight:
+        image: redislabs/redisinsight:latest
+        container_name: server_redis_insight
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_servers
+        environment:
+            - TZ=$TZ
+        volumes:
+            - ./redis-insight:/db
+        depends_on:
+            - redis-cluster-creator
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_servers"
+            - "traefik.http.routers.redis-insight.rule=Host(`insight.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.redis-insight.tls=true"
+            - "traefik.http.services.redis-insight.loadbalancer.server.port=5540"
 
     pgadmin:
         image: dpage/pgadmin4
@@ -876,6 +914,53 @@ services:
             - "traefik.http.routers.minio-web.tls=true"
             - "traefik.http.routers.minio-web.service=svc_web"            
             - "traefik.http.services.svc_web.loadbalancer.server.port=9001" # For viewing Minio Web Console
+    sonarqube:
+        image: sonarqube:community
+        container_name: server_sonarqube
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_servers
+        environment:
+            - TZ=$TZ
+            - SONAR_JDBC_USERNAME=${SONARQUBE_DATABASE_USERNAME}
+            - SONAR_JDBC_PASSWORD=${SONARQUBE_DATABASE_PASSWORD}
+            - SONAR_JDBC_URL=jdbc:postgresql://postgres-sq:5432/${SONARQUBE_DATABASE_NAME}
+            - sonar.search.javaAdditionalOpts=-Dbootstrap.system_call_filter=false
+        volumes:
+            - sonarqube_logs:/opt/sonarqube/logs
+            - sonarqube_data:/opt/sonarqube/data
+            - sonarqube_extensions:/opt/sonarqube/extensions
+        depends_on:
+            - postgres-sq
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_servers"
+            - "traefik.http.routers.sonarqube.entrypoints=https"
+            - "traefik.http.routers.sonarqube.rule=Host(`sonarqube.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.sonarqube.tls=true"
+            - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
+    
+    nexus:
+        image: sonatype/nexus3:latest
+        container_name: server_nexus
+        restart: always
+        security_opt:
+            - no-new-privileges:true
+        networks:
+            - ntw_servers
+        environment:
+            - TZ=$TZ
+        volumes:
+            - nexus_data:/nexus-data
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=ntw_servers"
+            - "traefik.http.routers.nexus.entrypoints=https"
+            - "traefik.http.routers.nexus.rule=Host(`nexus.${DOMAIN_DEVELOPMENT}`)"
+            - "traefik.http.routers.nexus.tls=true"
+            - "traefik.http.services.nexus.loadbalancer.server.port=8081"
 
 #    ollama:
 #        image: ollama/ollama:latest

@@ -143,6 +143,7 @@ wget -o $HOME/postgres-examples/demo-big-en.zip https://edu.postgrespro.com/demo
 sudo docker volume create pgdata-kc
 sudo docker volume create pgdata-lr
 sudo docker volume create pgdata-ak
+sudo docker volume create pgdata-sq
 sudo docker volume create mysqldata-st
 sudo docker volume create mongo-st
 sudo docker volume create pgadmin
@@ -154,10 +155,20 @@ sudo docker volume create oracle-data
 sudo docker volume create oracle-backup
 sudo docker volume create minio-storage
 sudo docker volume create redis-ak
+sudo docker volume create sonarqube_data
+sudo docker volume create sonarqube_extensions
+sudo docker volume create sonarqube_logs
+sudo docker volume create nexus_data
 
 sudo docker network create --driver bridge ntw_servers
 
 sudo docker compose -f $APP_SHARED/docker-compose.yaml up -d
+
+sudo sysctl -w vm.max_map_count=524288
+sudo sysctl vm.overcommit_memory=1
+sudo sysctl -w fs.file-max=131072
+ulimit -n 131072
+ulimit -u 8192
 
 #######################################################################
 #
@@ -166,6 +177,15 @@ sudo docker compose -f $APP_SHARED/docker-compose.yaml up -d
 #######################################################################
 sudo ufw allow 80
 sudo ufw allow 443
+
+#######################################################################
+#
+#	Config ssh keys to remote server
+#
+#######################################################################
+# ssh-keygen -t rsa -b 4096 -C developer -f id_rsa_vscode
+# ssh-copy-id -i ~/.ssh/id_rsa_vscode.pub vagrant@developer.io
+# ssh -i ~/.ssh/id_rsa_vscode vagrant@developer.io
 
 #######################################################################
 #
@@ -316,9 +336,12 @@ sudo ufw allow 443
 #192.168.56.10 jaeger.servers.dck
 #192.168.56.10 prometheus.servers.dck
 #192.168.56.10 rabbit.servers.dck
+#192.168.56.10 sonarqube.servers.dck
+#192.168.56.10 nexus.servers.dck
 
 #192.168.56.10 keycloak.postgres.servers.dck
 #192.168.56.10 learning.postgres.servers.dck
+#192.168.56.10 sonarqube.postgres.servers.dck
 
 #192.168.56.10 grafana.servers.dck
 #192.168.56.10 influxdb.servers.dck
